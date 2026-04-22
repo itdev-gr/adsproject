@@ -21,8 +21,6 @@ A multi-tenant SaaS platform that lets users **manage and create paid ad campaig
 - **Tables:** TanStack Table
 - **Payments:** Stripe (Checkout + Customer Portal + webhooks)
 - **Email:** Resend + React Email
-- **Error tracking:** Sentry
-- **Product analytics:** PostHog
 - **Hosting:** Vercel (Next.js) + Supabase cloud + Inngest cloud
 - **Repo:** single Next.js app (no monorepo); GitHub `marios/autoads` private; pnpm
 

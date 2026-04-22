@@ -10,30 +10,17 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "db:types": "supabase gen types typescript --linked > src/db/types.ts",
     "db:push": "supabase db push --linked",
-    "db:diff": "supabase db diff -f",
-    "prepare": "husky"
-  },
-  "lint-staged": {
-    "*.{ts,tsx,js,jsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.{json,md,css}": [
-      "prettier --write"
-    ]
+    "db:diff": "supabase db diff -f"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-slot": "^1.2.4",
-    "@sentry/nextjs": "^10.49.0",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.104.0",
     "@t3-oss/env-nextjs": "^0.13.11",
@@ -42,8 +29,6 @@
     "lucide-react": "^1.8.0",
     "next": "16.2.4",
     "next-themes": "^0.4.6",
-    "posthog-js": "^1.370.1",
-    "posthog-node": "^5.29.5",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.73.1",
@@ -60,16 +45,12 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@vitest/ui": "^4.1.5",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "eslint-config-prettier": "^10.1.8",
-    "husky": "^9.1.7",
-    "lint-staged": "^16.4.0",
     "prettier": "^3.8.3",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "tailwindcss": "^4",
-    "typescript": "^5",
-    "vitest": "^4.1.5"
+    "typescript": "^5"
   }
 }

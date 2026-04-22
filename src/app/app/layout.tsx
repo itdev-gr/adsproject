@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { AppSidebar } from '@/components/app/app-sidebar'
 import { AppHeader } from '@/components/app/app-header'
-import { IdentifyUser } from '@/components/app/identify-user'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -29,7 +28,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           avatarUrl={profile?.avatar_url ?? null}
           workspaceName={workspace.name}
         />
-        <IdentifyUser id={userData.user.id} email={userData.user.email ?? ''} />
         <main className="bg-muted/20 flex-1 overflow-auto p-8">{children}</main>
       </div>
     </div>

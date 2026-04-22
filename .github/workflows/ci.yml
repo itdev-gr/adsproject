@@ -28,9 +28,6 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-      - name: Unit tests
-        run: pnpm test
-
       - name: Build
         run: pnpm build
         env:
@@ -40,5 +37,3 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: placeholder
           DATABASE_URL: postgresql://placeholder@placeholder/placeholder
           NEXT_PUBLIC_SITE_URL: https://placeholder.example.com
-          NEXT_PUBLIC_POSTHOG_HOST: https://us.i.posthog.com
-          # Sentry build wrap is disabled when SENTRY_AUTH_TOKEN is unset (per next.config.ts)

@@ -38,9 +38,6 @@ A single Next.js 16 (App Router) application deployed to Vercel, talking to one 
 │  - API routes (only when needed)    │         │  - Storage (later)   │
 │  Hosted on Vercel                   │         │  Hosted on Supabase  │
 └─────────────────────────────────────┘         └──────────────────────┘
-            │
-            ├─→ PostHog (product analytics, client + server)
-            └─→ Sentry (error tracking, server + client)
 ```
 
 **Three runtime contexts in the Next.js app:**
@@ -214,8 +211,7 @@ The sidebar shows: Dashboard, Campaigns, Connections, Automation, Reports, Setti
   ├─ Submit → Server Action `signUp(formData)`
   │   ├─ supabase.auth.signUp({ email, password })  // no email verification configured
   │   ├─ trigger inserts row in `profiles` (display_name = null)
-  │   ├─ supabase.auth.signInWithPassword (auto-login)
-  │   └─ PostHog: "user_signed_up" { email_domain, signup_method: "password" }
+  │   └─ supabase.auth.signInWithPassword (auto-login)
   ├─ Success → redirect to /onboarding
   └─ Error (e.g. duplicate email) → inline error, stay on /sign-up
 ```
@@ -227,8 +223,7 @@ The sidebar shows: Dashboard, Campaigns, Connections, Automation, Reports, Setti
   ├─ Form: workspace_name (text, max 60 chars)
   ├─ Submit → Server Action `createInitialWorkspace(name)`
   │   ├─ slug = slugify(name) + collision suffix if needed
-  │   ├─ INSERT into `workspaces` (name, slug, owner_id = auth.uid())
-  │   └─ PostHog: "onboarding_completed" { workspace_name_length }
+  │   └─ INSERT into `workspaces` (name, slug, owner_id = auth.uid())
   └─ Redirect to /app/dashboard
 ```
 
@@ -245,8 +240,7 @@ Middleware guarantees:
   ├─ Form: email, password
   ├─ Links: "Forgot password?", "Don't have an account? Sign up"
   ├─ Submit → Server Action `logIn(formData)`
-  │   ├─ supabase.auth.signInWithPassword({ email, password })
-  │   └─ PostHog: "user_logged_in" { email_domain }
+  │   └─ supabase.auth.signInWithPassword({ email, password })
   ├─ Success → redirect to /app/dashboard (or to `?redirect=` destination)
   └─ Error → generic "Invalid email or password" inline (don't leak email existence)
 ```
@@ -319,7 +313,7 @@ autoads/
 ├── middleware.ts                    session refresh + route protection
 ├── next.config.ts
 ├── tailwind.config.ts, postcss.config.mjs, tsconfig.json
-├── playwright.config.ts, vitest.config.ts
+├── playwright.config.ts
 ├── package.json, pnpm-lock.yaml
 ├── README.md
 ├── AGENTS.md                        Next.js 16 breaking-change warning for AI agents (auto-created by create-next-app)
@@ -340,8 +334,6 @@ autoads/
 │   ├── lib/
 │   │   ├── supabase/                server.ts, client.ts, middleware.ts
 │   │   ├── actions/                 auth.ts, onboarding.ts, profile.ts, workspace.ts, account.ts
-│   │   ├── posthog/                 server.ts, client.ts
-│   │   ├── sentry/
 │   │   ├── env.ts                   t3-env validated env schema
 │   │   ├── utils.ts                 cn() and tiny helpers
 │   │   └── slug.ts
@@ -356,10 +348,9 @@ autoads/
 │   │   └── 0002_signup_trigger.sql
 │   └── seed.sql
 ├── tests/
-│   ├── unit/                        slug.test.ts, env.test.ts
 │   └── e2e/                         auth.spec.ts, marketing.spec.ts
 └── .github/workflows/
-    ├── ci.yml                       typecheck + lint + unit + build + e2e
+    ├── ci.yml                       typecheck + lint + build + e2e
     └── deploy.yml                   migrations on merge to main
 ```
 
@@ -376,14 +367,6 @@ DATABASE_URL=                        # for Drizzle direct connection
 
 # Site
 NEXT_PUBLIC_SITE_URL=https://autoads.vercel.app
-
-# Analytics
-NEXT_PUBLIC_POSTHOG_KEY=
-NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
-
-# Error tracking
-SENTRY_DSN=
-SENTRY_AUTH_TOKEN=                   # for source-map upload at build time
 ```
 
 `.env.example` committed; `.env.local` gitignored.
@@ -401,7 +384,7 @@ cp .env.example .env.local           # then fill from `supabase status` output
 pnpm dev                             # http://localhost:3000
 ```
 
-`pnpm` scripts: `dev`, `build`, `start`, `lint`, `typecheck`, `test`, `test:e2e`, `db:types`, `db:push`, `db:diff`.
+`pnpm` scripts: `dev`, `build`, `start`, `lint`, `typecheck`, `test:e2e`, `db:types`, `db:push`, `db:diff`.
 
 ### CI/CD
 
@@ -415,19 +398,9 @@ pnpm dev                             # http://localhost:3000
 
 | Layer                 | Tool       | What's covered in Foundation                                                                                                                                           |
 | --------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Unit**              | Vitest     | `slug()` collision handling + edge cases; `env.ts` validation throws; middleware path matchers                                                                         |
 | **E2E**               | Playwright | (1) full happy path: visit `/`, click "Sign up", complete sign-up, name workspace, land on dashboard, sign out. (2) marketing pages return 200 with no console errors. |
 | **Component**         | —          | None at Foundation                                                                                                                                                     |
 | **Visual regression** | —          | Deferred                                                                                                                                                               |
-
-### Pre-commit hooks (Husky + lint-staged)
-
-On `git commit`: ESLint --fix + Prettier --write on staged files; full repo typecheck (~3s incremental).
-
-### Error tracking & analytics
-
-- **Sentry**: `withErrorTracking()` helper wraps Server Actions, re-throws after `Sentry.captureException`. Source maps uploaded at build. Free tier (5k errors/mo).
-- **PostHog**: client SDK in `app/layout.tsx`; `posthog.identify()` once on sign-in. Server events from Server Actions via `posthog-node`. Autocapture on, session recording off.
 
 ---
 
@@ -449,8 +422,7 @@ Quality gates:
 
 - [ ] All marketing pages return 200; Lighthouse landing page ≥90 perf / ≥95 a11y
 - [ ] All `/app/*` routes redirect to `/log-in` when unauthenticated
-- [ ] `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm test:e2e` all green
-- [ ] PostHog receives real events; Sentry receives a deliberate test error
+- [ ] `pnpm typecheck`, `pnpm lint`, `pnpm test:e2e` all green
 - [ ] `/api/health` returns 200
 - [ ] `/app/dashboard` first-load JS bundle <120KB
 

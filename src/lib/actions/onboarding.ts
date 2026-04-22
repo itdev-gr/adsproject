@@ -4,7 +4,6 @@ import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { ensureUniqueSlug, slugify } from '@/lib/slug'
-import { captureServer } from '@/lib/posthog/server'
 
 const schema = z.object({ name: z.string().min(1).max(60) })
 
@@ -29,10 +28,6 @@ export async function createInitialWorkspace(formData: FormData) {
     .from('workspaces')
     .insert({ name: parsed.data.name, slug, owner_id: userData.user.id })
   if (error) return { error: error.message }
-
-  await captureServer(userData.user.id, 'onboarding_completed', {
-    workspace_name_length: parsed.data.name.length,
-  })
 
   redirect('/app/dashboard')
 }
