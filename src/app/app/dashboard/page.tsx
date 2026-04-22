@@ -3,10 +3,12 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { StatCard } from '@/components/shared/stat-card'
 import { EmptyState } from '@/components/shared/empty-state'
+import { TrackDashboardView } from '@/components/app/track-dashboard-view'
 
 export default function DashboardPage() {
   return (
     <div className="space-y-6">
+      <TrackDashboardView />
       <div>
         <h1 className="text-2xl font-semibold">Dashboard</h1>
         <p className="text-muted-foreground text-sm">Overview · Last 7 days</p>
