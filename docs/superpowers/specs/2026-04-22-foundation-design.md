@@ -320,6 +320,8 @@ autoads/
 ├── playwright.config.ts, vitest.config.ts
 ├── package.json, pnpm-lock.yaml
 ├── README.md
+├── AGENTS.md                        Next.js 16 breaking-change warning for AI agents (auto-created by create-next-app)
+├── CLAUDE.md                        one-liner referencing AGENTS.md
 ├── public/                          favicon.ico, og.png
 ├── src/
 │   ├── app/                         (see route map in Section 2)
