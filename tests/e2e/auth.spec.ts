@@ -24,7 +24,8 @@ test('full happy path: sign up → onboard → dashboard → sign out', async ({
 
   // Dashboard
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
-  await expect(page.getByText(workspaceName)).toBeVisible()
+  // Workspace name appears in both sidebar and header — assert at least one
+  await expect(page.getByText(workspaceName).first()).toBeVisible()
 
   // Capture user id for cleanup before signing out
   const admin = createClient(SUPABASE_URL, SERVICE_KEY, {

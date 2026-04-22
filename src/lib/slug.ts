@@ -7,6 +7,7 @@ export function slugify(input: string): string {
     .trim()
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '')
   return normalised || 'workspace'
 }
 

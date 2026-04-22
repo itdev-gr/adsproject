@@ -20,9 +20,6 @@ out/
 supabase/.branches
 supabase/.temp
 
-# generated types (regenerated from migrations)
-src/db/types.ts
-
 # tests
 playwright-report
 test-results
@@ -33,3 +30,6 @@ coverage
 
 # typescript incremental
 *.tsbuildinfo
+
+# next regenerates this on every dev/build — let it
+next-env.d.ts

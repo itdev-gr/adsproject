@@ -7,6 +7,12 @@ describe('slugify', () => {
   it('collapses whitespace', () => expect(slugify('  Acme   Co  ')).toBe('acme-co'))
   it('handles unicode', () => expect(slugify('Café Münchën')).toBe('cafe-munchen'))
   it('returns "workspace" for empty input', () => expect(slugify('')).toBe('workspace'))
+  it('strips leading/trailing hyphens', () => expect(slugify('-acme-')).toBe('acme'))
+  it('returns "workspace" for hyphens-only input', () => expect(slugify('---')).toBe('workspace'))
+  it('returns "workspace" for special-chars-only input', () =>
+    expect(slugify('!!!')).toBe('workspace'))
+  it('strips leading/trailing hyphens after collapse', () =>
+    expect(slugify('---abc---')).toBe('abc'))
 })
 
 describe('ensureUniqueSlug', () => {

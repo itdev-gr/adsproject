@@ -15,7 +15,7 @@ export async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = '/log-in'
     url.searchParams.set('redirect', pathname)
-    return NextResponse.redirect(url)
+    return redirectWithCookies(url, response)
   }
 
   if (user) {
@@ -29,21 +29,29 @@ export async function proxy(request: NextRequest) {
     if (pathname.startsWith('/app') && !hasWorkspace) {
       const url = request.nextUrl.clone()
       url.pathname = '/onboarding'
-      return NextResponse.redirect(url)
+      return redirectWithCookies(url, response)
     }
     if (pathname === '/onboarding' && hasWorkspace) {
       const url = request.nextUrl.clone()
       url.pathname = '/app/dashboard'
-      return NextResponse.redirect(url)
+      return redirectWithCookies(url, response)
     }
     if (isAuthPage) {
       const url = request.nextUrl.clone()
       url.pathname = '/app/dashboard'
-      return NextResponse.redirect(url)
+      return redirectWithCookies(url, response)
     }
   }
 
   return response
+}
+
+function redirectWithCookies(url: URL, sourceResponse: NextResponse) {
+  const redirect = NextResponse.redirect(url)
+  for (const cookie of sourceResponse.cookies.getAll()) {
+    redirect.cookies.set(cookie.name, cookie.value, cookie)
+  }
+  return redirect
 }
 
 export const config = {
