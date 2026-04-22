@@ -1,0 +1,9 @@
+node_modules
+.next
+.vercel
+out
+coverage
+playwright-report
+test-results
+src/db/types.ts
+pnpm-lock.yaml

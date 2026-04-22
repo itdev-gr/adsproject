@@ -21,6 +21,7 @@ The full target tree is in the design spec, Section 4. This plan builds it in th
 ## Task 1: Bootstrap the Next.js project
 
 **Files:**
+
 - Create: everything inside `/Users/marios/Desktop/Cursor/autoads/` (currently empty folder)
 
 - [ ] **Step 1: Verify pnpm and Node 20**
@@ -29,6 +30,7 @@ The full target tree is in the design spec, Section 4. This plan builds it in th
 node --version    # expect v20.x
 pnpm --version    # expect 8.x or newer
 ```
+
 If pnpm is missing: `npm install -g pnpm`.
 
 - [ ] **Step 2: Run `create-next-app` with the chosen options**
@@ -39,6 +41,7 @@ pnpm create next-app@latest . \
   --typescript --tailwind --eslint --app --src-dir \
   --import-alias "@/*" --use-pnpm --turbopack --skip-install --yes
 ```
+
 **Heads up:** `create-next-app` refuses to run when `.superpowers/` exists, even with `--yes` (it's a hard error, not a prompt). Workaround: `mv .superpowers /tmp/__superpowers_tmp && mv docs /tmp/__docs_tmp`, run create-next-app, then `mv /tmp/__superpowers_tmp .superpowers && mv /tmp/__docs_tmp docs`. After this Task 1 commits, future re-runs are unaffected.
 
 - [ ] **Step 3: Install dependencies**
@@ -56,6 +59,7 @@ echo "20" > .nvmrc
 - [ ] **Step 5: Replace `.gitignore` with the project's allowlist**
 
 Write `/Users/marios/Desktop/Cursor/autoads/.gitignore`:
+
 ```gitignore
 # deps
 node_modules
@@ -96,6 +100,7 @@ coverage
 ```bash
 pnpm dev
 ```
+
 Visit `http://localhost:3000` — expect the default Next.js welcome screen. Stop the server (Ctrl-C).
 
 - [ ] **Step 7: Initialise git + initial commit**
@@ -112,6 +117,7 @@ git commit -m "chore: bootstrap Next.js 15 + TS + Tailwind project"
 ## Task 2: Configure linting, formatting, and pre-commit hooks
 
 **Files:**
+
 - Create: `.prettierrc`, `.prettierignore`
 - Create: `.husky/pre-commit`
 - Modify: `package.json`
@@ -153,6 +159,7 @@ pnpm-lock.yaml
 - [ ] **Step 4: Append `prettier` to `eslint.config.mjs`**
 
 Edit `eslint.config.mjs`. After the existing `next/core-web-vitals` extend, add `'prettier'`:
+
 ```js
 import { dirname } from 'path'
 import { fileURLToPath } from 'url'
@@ -162,9 +169,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 const compat = new FlatCompat({ baseDirectory: __dirname })
 
-const eslintConfig = [
-  ...compat.extends('next/core-web-vitals', 'next/typescript', 'prettier'),
-]
+const eslintConfig = [...compat.extends('next/core-web-vitals', 'next/typescript', 'prettier')]
 
 export default eslintConfig
 ```
@@ -172,6 +177,7 @@ export default eslintConfig
 - [ ] **Step 5: Add scripts and lint-staged config to `package.json`**
 
 Open `package.json`. In the `scripts` block, add:
+
 ```json
 "format": "prettier --write .",
 "format:check": "prettier --check .",
@@ -180,6 +186,7 @@ Open `package.json`. In the `scripts` block, add:
 ```
 
 At the top level (sibling of `scripts`), add:
+
 ```json
 "lint-staged": {
   "*.{ts,tsx,js,jsx}": ["eslint --fix", "prettier --write"],
@@ -202,11 +209,13 @@ pnpm format
 pnpm lint
 pnpm typecheck
 ```
+
 Expected: all three exit 0.
 
 - [ ] **Step 8: Tighten TypeScript strictness**
 
 Open `tsconfig.json`. In `compilerOptions` add (or set):
+
 ```json
 "strict": true,
 "noUncheckedIndexedAccess": true,
@@ -227,6 +236,7 @@ git commit -m "chore: add prettier + lint-staged + husky + strict TS"
 ## Task 3: Install shadcn/ui and add core primitives
 
 **Files:**
+
 - Create: `components.json`
 - Create: `src/components/ui/*.tsx` (multiple shadcn primitives)
 - Modify: `src/app/globals.css`
@@ -237,6 +247,7 @@ git commit -m "chore: add prettier + lint-staged + husky + strict TS"
 ```bash
 pnpm dlx shadcn@latest init
 ```
+
 Choose: TypeScript, default style, base color **Slate**, CSS variables = yes. This writes `components.json` and updates `globals.css` and `tailwind.config.ts` with CSS variables and the `tw-animate-css` plugin.
 
 - [ ] **Step 2: Add the primitives we need at v1**
@@ -244,15 +255,17 @@ Choose: TypeScript, default style, base color **Slate**, CSS variables = yes. Th
 ```bash
 pnpm dlx shadcn@latest add button input label card dialog dropdown-menu avatar skeleton sonner form alert separator
 ```
+
 This creates files under `src/components/ui/`.
 
 - [ ] **Step 3: Override the accent colour to indigo-600**
 
 Open `src/app/globals.css`. In the `:root` and `.dark` blocks, replace the existing `--primary` / `--primary-foreground` values with indigo-600 in HSL:
+
 ```css
 :root {
   /* ...keep other vars... */
-  --primary: 239 84% 56%;          /* indigo-600 */
+  --primary: 239 84% 56%; /* indigo-600 */
   --primary-foreground: 0 0% 100%; /* white */
 }
 .dark {
@@ -270,6 +283,7 @@ pnpm add next-themes
 - [ ] **Step 5: Wrap the root layout in `ThemeProvider`**
 
 Create `src/components/theme-provider.tsx`:
+
 ```tsx
 'use client'
 
@@ -282,18 +296,27 @@ export function ThemeProvider({ children, ...props }: ComponentProps<typeof Next
 ```
 
 Edit `src/app/layout.tsx`. Replace the body with:
+
 ```tsx
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
-export const metadata = { title: 'autoads', description: 'Manage Google Ads + Meta Ads from one place.' }
+export const metadata = {
+  title: 'autoads',
+  description: 'Manage Google Ads + Meta Ads from one place.',
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="min-h-dvh bg-background text-foreground antialiased">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+      <body className="bg-background text-foreground min-h-dvh antialiased">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
           {children}
           <Toaster richColors closeButton />
         </ThemeProvider>
@@ -308,6 +331,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 ```bash
 pnpm dev
 ```
+
 Visit `http://localhost:3000`. Open DevTools → Console — expect no errors. Stop the server.
 
 - [ ] **Step 7: Commit**
@@ -322,6 +346,7 @@ git commit -m "feat: add shadcn/ui primitives + indigo theme + next-themes provi
 ## Task 4: Add `t3-env` validated environment + `.env.example`
 
 **Files:**
+
 - Create: `src/lib/env.ts`
 - Create: `.env.example`
 - Modify: `next.config.ts`
@@ -391,6 +416,7 @@ SENTRY_AUTH_TOKEN=
 - [ ] **Step 4: Force env validation at import time**
 
 Edit `next.config.ts`:
+
 ```ts
 import './src/lib/env'
 import type { NextConfig } from 'next'
@@ -407,6 +433,7 @@ export default nextConfig
 ```bash
 cp .env.example .env.local
 ```
+
 Real values will be filled in Task 6 once Supabase is running.
 
 - [ ] **Step 6: Commit**
@@ -421,6 +448,7 @@ git commit -m "feat: add t3-env validated environment + .env.example"
 ## Task 5: Create the `slug` utility (TDD)
 
 **Files:**
+
 - Create: `src/lib/slug.ts`
 - Create: `tests/unit/slug.test.ts`
 - Modify: `package.json`
@@ -451,6 +479,7 @@ export default defineConfig({
 - [ ] **Step 3: Add `test` script to `package.json`**
 
 In `scripts`:
+
 ```json
 "test": "vitest run",
 "test:watch": "vitest"
@@ -459,6 +488,7 @@ In `scripts`:
 - [ ] **Step 4: Write the failing test**
 
 Create `tests/unit/slug.test.ts`:
+
 ```ts
 import { describe, expect, it } from 'vitest'
 import { slugify, ensureUniqueSlug } from '@/lib/slug'
@@ -492,6 +522,7 @@ describe('ensureUniqueSlug', () => {
 ```bash
 pnpm test
 ```
+
 Expected: FAIL with "Cannot find module '@/lib/slug'".
 
 - [ ] **Step 6: Implement `src/lib/slug.ts`**
@@ -527,6 +558,7 @@ export async function ensureUniqueSlug(
 ```bash
 pnpm test
 ```
+
 Expected: PASS, 8 tests passing.
 
 - [ ] **Step 8: Commit**
@@ -541,6 +573,7 @@ git commit -m "feat: add slug utility with unit tests"
 ## Task 6: Initialise local Supabase
 
 **Files:**
+
 - Create: `supabase/config.toml` (auto-written by `supabase init`)
 - Modify: `.env.local` (real Supabase values)
 
@@ -549,6 +582,7 @@ git commit -m "feat: add slug utility with unit tests"
 ```bash
 supabase --version
 ```
+
 If missing: `brew install supabase/tap/supabase`.
 
 - [ ] **Step 2: Initialise**
@@ -557,6 +591,7 @@ If missing: `brew install supabase/tap/supabase`.
 cd /Users/marios/Desktop/Cursor/autoads
 supabase init
 ```
+
 Skip the VS Code settings prompt unless you want them.
 
 - [ ] **Step 3: Start the local stack**
@@ -564,11 +599,13 @@ Skip the VS Code settings prompt unless you want them.
 ```bash
 supabase start
 ```
+
 Expected: Docker pulls images then prints a status block with `API URL`, `anon key`, `service_role key`, `DB URL`. **Copy these values.**
 
 - [ ] **Step 4: Fill `.env.local`**
 
 Open `.env.local` and paste the values from `supabase status`:
+
 ```
 NEXT_PUBLIC_SUPABASE_URL=<API URL from status>
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key from status>
@@ -583,6 +620,7 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 pnpm typecheck
 pnpm dev
 ```
+
 Expected: dev server boots without throwing on env validation. Visit `http://localhost:3000`. Stop the server.
 
 - [ ] **Step 6: Commit (configs only — `.env.local` is gitignored)**
@@ -597,6 +635,7 @@ git commit -m "chore: initialise local Supabase project"
 ## Task 7: Write database migrations (profiles, workspaces, RLS, sign-up trigger, avatars bucket)
 
 **Files:**
+
 - Create: `supabase/migrations/0001_initial_profiles_workspaces.sql`
 - Create: `supabase/migrations/0002_signup_trigger.sql`
 - Create: `supabase/migrations/0003_avatars_bucket.sql`
@@ -604,6 +643,7 @@ git commit -m "chore: initialise local Supabase project"
 - [ ] **Step 1: Write migration 0001**
 
 `supabase/migrations/0001_initial_profiles_workspaces.sql`:
+
 ```sql
 create table public.profiles (
   id           uuid primary key references auth.users(id) on delete cascade,
@@ -641,6 +681,7 @@ create policy workspaces_delete_own on public.workspaces for delete using (owner
 - [ ] **Step 2: Write migration 0002 (sign-up trigger)**
 
 `supabase/migrations/0002_signup_trigger.sql`:
+
 ```sql
 create or replace function public.handle_new_user()
 returns trigger
@@ -662,6 +703,7 @@ create trigger on_auth_user_created
 - [ ] **Step 3: Write migration 0003 (avatars bucket + policies)**
 
 `supabase/migrations/0003_avatars_bucket.sql`:
+
 ```sql
 insert into storage.buckets (id, name, public)
 values ('avatars', 'avatars', true)
@@ -698,11 +740,13 @@ create policy "users can delete own avatar"
 ```bash
 supabase db reset
 ```
+
 Expected: prints each migration applied + "Finished supabase db reset on branch ...".
 
 - [ ] **Step 5: Manually verify in Supabase Studio**
 
 Open `http://127.0.0.1:54323` (Studio URL from `supabase status`). Confirm:
+
 - Tables `profiles` and `workspaces` exist with the right columns
 - RLS is enabled on both
 - A bucket named `avatars` exists under Storage
@@ -719,6 +763,7 @@ git commit -m "feat: add profiles + workspaces tables, RLS, signup trigger, avat
 ## Task 8: Set up Supabase client helpers + type generation
 
 **Files:**
+
 - Create: `src/lib/supabase/server.ts`
 - Create: `src/lib/supabase/client.ts`
 - Create: `src/lib/supabase/middleware.ts`
@@ -734,6 +779,7 @@ pnpm add @supabase/ssr @supabase/supabase-js
 - [ ] **Step 2: Add type-generation script to `package.json`**
 
 In `scripts`:
+
 ```json
 "db:types": "supabase gen types typescript --local > src/db/types.ts",
 "db:reset": "supabase db reset",
@@ -746,11 +792,13 @@ In `scripts`:
 ```bash
 pnpm db:types
 ```
+
 Expected: `src/db/types.ts` created (a few hundred lines of TypeScript).
 
 - [ ] **Step 4: Write the server-side client**
 
 `src/lib/supabase/server.ts`:
+
 ```ts
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
@@ -783,6 +831,7 @@ export async function createClient() {
 - [ ] **Step 5: Write the browser client**
 
 `src/lib/supabase/client.ts`:
+
 ```ts
 import { createBrowserClient } from '@supabase/ssr'
 import { env } from '@/lib/env'
@@ -799,6 +848,7 @@ export function createClient() {
 - [ ] **Step 6: Write the middleware-side helper**
 
 `src/lib/supabase/middleware.ts`:
+
 ```ts
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
@@ -833,6 +883,7 @@ export async function updateSession(request: NextRequest) {
 ```bash
 pnpm typecheck
 ```
+
 Expected: zero errors.
 
 - [ ] **Step 8: Commit**
@@ -847,6 +898,7 @@ git commit -m "feat: add Supabase client helpers + DB type generation script"
 ## Task 9: Build shared visual primitives (`Logo`, `ThemeToggle`, `EmptyState`, `StatCard`)
 
 **Files:**
+
 - Create: `src/components/shared/logo.tsx`
 - Create: `src/components/shared/theme-toggle.tsx`
 - Create: `src/components/shared/empty-state.tsx`
@@ -861,6 +913,7 @@ pnpm add lucide-react
 - [ ] **Step 2: Write `Logo`**
 
 `src/components/shared/logo.tsx`:
+
 ```tsx
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
@@ -870,7 +923,7 @@ export function Logo({ className, href = '/' }: { className?: string; href?: str
     <Link
       href={href}
       className={cn(
-        'inline-flex select-none items-center text-lg font-bold tracking-tight text-foreground',
+        'text-foreground inline-flex items-center text-lg font-bold tracking-tight select-none',
         className,
       )}
     >
@@ -883,6 +936,7 @@ export function Logo({ className, href = '/' }: { className?: string; href?: str
 - [ ] **Step 3: Write `ThemeToggle`**
 
 `src/components/shared/theme-toggle.tsx`:
+
 ```tsx
 'use client'
 
@@ -902,8 +956,8 @@ export function ThemeToggle() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" aria-label="Toggle theme">
-          <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          <Sun className="h-4 w-4 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
+          <Moon className="absolute h-4 w-4 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -925,6 +979,7 @@ export function ThemeToggle() {
 - [ ] **Step 4: Write `EmptyState`**
 
 `src/components/shared/empty-state.tsx`:
+
 ```tsx
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -941,15 +996,15 @@ export function EmptyState({ icon: Icon, title, description, action, className }
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center rounded-xl border border-dashed bg-muted/30 px-8 py-16 text-center',
+        'bg-muted/30 flex flex-col items-center justify-center rounded-xl border border-dashed px-8 py-16 text-center',
         className,
       )}
     >
-      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-        <Icon className="h-5 w-5 text-muted-foreground" />
+      <div className="bg-muted mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+        <Icon className="text-muted-foreground h-5 w-5" />
       </div>
       <h3 className="mb-1 text-base font-semibold">{title}</h3>
-      <p className="mb-6 max-w-sm text-sm text-muted-foreground">{description}</p>
+      <p className="text-muted-foreground mb-6 max-w-sm text-sm">{description}</p>
       {action}
     </div>
   )
@@ -959,6 +1014,7 @@ export function EmptyState({ icon: Icon, title, description, action, className }
 - [ ] **Step 5: Write `StatCard`**
 
 `src/components/shared/stat-card.tsx`:
+
 ```tsx
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
@@ -972,13 +1028,13 @@ export function StatCard({ label, value, hint }: StatCardProps) {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <CardTitle className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
           {label}
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-semibold">{value}</div>
-        {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+        {hint && <p className="text-muted-foreground mt-1 text-xs">{hint}</p>}
       </CardContent>
     </Card>
   )
@@ -997,6 +1053,7 @@ git commit -m "feat: add Logo, ThemeToggle, EmptyState, StatCard primitives"
 ## Task 10: Build the auth-related Server Actions
 
 **Files:**
+
 - Create: `src/lib/actions/auth.ts`
 - Create: `src/lib/actions/onboarding.ts`
 - Create: `src/lib/actions/profile.ts`
@@ -1016,12 +1073,17 @@ import { env } from '@/lib/env'
 
 const signUpSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(8).regex(/[A-Za-z]/).regex(/[0-9]/),
+  password: z
+    .string()
+    .min(8)
+    .regex(/[A-Za-z]/)
+    .regex(/[0-9]/),
 })
 
 export async function signUp(formData: FormData) {
   const parsed = signUpSchema.safeParse(Object.fromEntries(formData))
-  if (!parsed.success) return { error: 'Please enter a valid email and password (8+ chars, letters + digits).' }
+  if (!parsed.success)
+    return { error: 'Please enter a valid email and password (8+ chars, letters + digits).' }
 
   const supabase = await createClient()
   const { error } = await supabase.auth.signUp({
@@ -1070,7 +1132,13 @@ export async function requestPasswordReset(formData: FormData) {
   return { ok: true }
 }
 
-const resetSchema = z.object({ password: z.string().min(8).regex(/[A-Za-z]/).regex(/[0-9]/) })
+const resetSchema = z.object({
+  password: z
+    .string()
+    .min(8)
+    .regex(/[A-Za-z]/)
+    .regex(/[0-9]/),
+})
 
 export async function resetPassword(formData: FormData) {
   const parsed = resetSchema.safeParse(Object.fromEntries(formData))
@@ -1106,7 +1174,10 @@ export async function createInitialWorkspace(formData: FormData) {
 
   const base = slugify(parsed.data.name)
   const slug = await ensureUniqueSlug(base, async (s) => {
-    const { count } = await supabase.from('workspaces').select('id', { count: 'exact', head: true }).eq('slug', s)
+    const { count } = await supabase
+      .from('workspaces')
+      .select('id', { count: 'exact', head: true })
+      .eq('slug', s)
     return (count ?? 0) > 0
   })
 
@@ -1140,7 +1211,10 @@ export async function updateProfile(formData: FormData) {
 
   const { error } = await supabase
     .from('profiles')
-    .update({ display_name: parsed.data.display_name || null, updated_at: new Date().toISOString() })
+    .update({
+      display_name: parsed.data.display_name || null,
+      updated_at: new Date().toISOString(),
+    })
     .eq('id', userData.user.id)
   if (error) return { error: error.message }
 
@@ -1212,6 +1286,7 @@ export async function deleteAccount() {
 ```bash
 pnpm typecheck
 ```
+
 Expected: zero errors.
 
 - [ ] **Step 7: Commit**
@@ -1226,6 +1301,7 @@ git commit -m "feat: add auth + onboarding + profile + workspace + account Serve
 ## Task 11: Build the `(auth)` route group (layout, sign-up, log-in, forgot, reset)
 
 **Files:**
+
 - Create: `src/app/(auth)/layout.tsx`
 - Create: `src/app/(auth)/sign-up/page.tsx`
 - Create: `src/app/(auth)/log-in/page.tsx`
@@ -1236,6 +1312,7 @@ git commit -m "feat: add auth + onboarding + profile + workspace + account Serve
 - [ ] **Step 1: Write `AuthCard`**
 
 `src/components/auth/auth-card.tsx`:
+
 ```tsx
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Logo } from '@/components/shared/logo'
@@ -1261,7 +1338,7 @@ export function AuthCard({
         </CardHeader>
         <CardContent>{children}</CardContent>
       </Card>
-      {footer && <div className="mt-6 text-sm text-muted-foreground">{footer}</div>}
+      {footer && <div className="text-muted-foreground mt-6 text-sm">{footer}</div>}
     </div>
   )
 }
@@ -1278,6 +1355,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 - [ ] **Step 3: Write the sign-up page**
 
 `src/app/(auth)/sign-up/page.tsx`:
+
 ```tsx
 import Link from 'next/link'
 import { AuthCard } from '@/components/auth/auth-card'
@@ -1294,7 +1372,10 @@ export default function SignUpPage() {
       footer={
         <>
           Already have an account?{' '}
-          <Link href="/log-in" className="font-medium text-foreground underline-offset-4 hover:underline">
+          <Link
+            href="/log-in"
+            className="text-foreground font-medium underline-offset-4 hover:underline"
+          >
             Log in
           </Link>
         </>
@@ -1307,10 +1388,19 @@ export default function SignUpPage() {
         </div>
         <div className="space-y-2">
           <Label htmlFor="password">Password</Label>
-          <Input id="password" name="password" type="password" autoComplete="new-password" required minLength={8} />
-          <p className="text-xs text-muted-foreground">8+ characters, with letters and digits.</p>
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="new-password"
+            required
+            minLength={8}
+          />
+          <p className="text-muted-foreground text-xs">8+ characters, with letters and digits.</p>
         </div>
-        <Button type="submit" className="w-full">Create account</Button>
+        <Button type="submit" className="w-full">
+          Create account
+        </Button>
       </form>
     </AuthCard>
   )
@@ -1320,6 +1410,7 @@ export default function SignUpPage() {
 - [ ] **Step 4: Write the log-in page**
 
 `src/app/(auth)/log-in/page.tsx`:
+
 ```tsx
 import Link from 'next/link'
 import { AuthCard } from '@/components/auth/auth-card'
@@ -1344,7 +1435,10 @@ export default async function LogInPage({
       footer={
         <>
           Don't have an account?{' '}
-          <Link href="/sign-up" className="font-medium text-foreground underline-offset-4 hover:underline">
+          <Link
+            href="/sign-up"
+            className="text-foreground font-medium underline-offset-4 hover:underline"
+          >
             Sign up
           </Link>
         </>
@@ -1358,13 +1452,21 @@ export default async function LogInPage({
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Password</Label>
-            <Link href="/forgot-password" className="text-xs text-muted-foreground hover:underline">
+            <Link href="/forgot-password" className="text-muted-foreground text-xs hover:underline">
               Forgot?
             </Link>
           </div>
-          <Input id="password" name="password" type="password" autoComplete="current-password" required />
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            required
+          />
         </div>
-        <Button type="submit" className="w-full">Log in</Button>
+        <Button type="submit" className="w-full">
+          Log in
+        </Button>
       </form>
     </AuthCard>
   )
@@ -1374,6 +1476,7 @@ export default async function LogInPage({
 - [ ] **Step 5: Write the forgot-password page**
 
 `src/app/(auth)/forgot-password/page.tsx`:
+
 ```tsx
 import { AuthCard } from '@/components/auth/auth-card'
 import { Button } from '@/components/ui/button'
@@ -1389,7 +1492,10 @@ export default function ForgotPasswordPage({
 }) {
   const sent = false // server actions handle redirect; we use client transition state in a fancier version
   return (
-    <AuthCard title="Reset your password" description="Enter the email associated with your account.">
+    <AuthCard
+      title="Reset your password"
+      description="Enter the email associated with your account."
+    >
       <form action={requestPasswordReset} className="space-y-4">
         {sent && (
           <Alert>
@@ -1402,7 +1508,9 @@ export default function ForgotPasswordPage({
           <Label htmlFor="email">Email</Label>
           <Input id="email" name="email" type="email" autoComplete="email" required />
         </div>
-        <Button type="submit" className="w-full">Send reset link</Button>
+        <Button type="submit" className="w-full">
+          Send reset link
+        </Button>
       </form>
     </AuthCard>
   )
@@ -1414,6 +1522,7 @@ export default function ForgotPasswordPage({
 - [ ] **Step 6: Write the reset-password page**
 
 `src/app/(auth)/reset-password/page.tsx`:
+
 ```tsx
 import { AuthCard } from '@/components/auth/auth-card'
 import { Button } from '@/components/ui/button'
@@ -1427,10 +1536,19 @@ export default function ResetPasswordPage() {
       <form action={resetPassword} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="password">New password</Label>
-          <Input id="password" name="password" type="password" autoComplete="new-password" required minLength={8} />
-          <p className="text-xs text-muted-foreground">8+ characters, with letters and digits.</p>
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="new-password"
+            required
+            minLength={8}
+          />
+          <p className="text-muted-foreground text-xs">8+ characters, with letters and digits.</p>
         </div>
-        <Button type="submit" className="w-full">Update password</Button>
+        <Button type="submit" className="w-full">
+          Update password
+        </Button>
       </form>
     </AuthCard>
   )
@@ -1442,6 +1560,7 @@ export default function ResetPasswordPage() {
 ```bash
 pnpm dev
 ```
+
 Visit `/sign-up`, `/log-in`, `/forgot-password`, `/reset-password`. Confirm each renders without errors. Stop dev server.
 
 - [ ] **Step 8: Commit**
@@ -1456,6 +1575,7 @@ git commit -m "feat: add (auth) route group — sign-up, log-in, forgot/reset pa
 ## Task 12: Build the `middleware.ts` (session refresh + route protection)
 
 **Files:**
+
 - Create: `middleware.ts` (project root)
 
 - [ ] **Step 1: Write `middleware.ts`**
@@ -1510,7 +1630,9 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api/health|_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|webp|ico|txt|xml)$).*)'],
+  matcher: [
+    '/((?!api/health|_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|webp|ico|txt|xml)$).*)',
+  ],
 }
 ```
 
@@ -1519,6 +1641,7 @@ export const config = {
 ```bash
 pnpm dev
 ```
+
 Visit `/app/dashboard` (no session) — expect redirect to `/log-in?redirect=%2Fapp%2Fdashboard`. Stop dev server.
 
 - [ ] **Step 3: Commit**
@@ -1533,6 +1656,7 @@ git commit -m "feat: add middleware for session refresh and route protection"
 ## Task 13: Build the onboarding page
 
 **Files:**
+
 - Create: `src/app/onboarding/page.tsx`
 
 - [ ] **Step 1: Write the onboarding page**
@@ -1546,16 +1670,23 @@ import { createInitialWorkspace } from '@/lib/actions/onboarding'
 
 export default function OnboardingPage() {
   return (
-    <AuthCard
-      title="Name your workspace"
-      description="You can rename it any time in Settings."
-    >
+    <AuthCard title="Name your workspace" description="You can rename it any time in Settings.">
       <form action={createInitialWorkspace} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="name">Workspace name</Label>
-          <Input id="name" name="name" type="text" required maxLength={60} placeholder="Acme Co" autoFocus />
+          <Input
+            id="name"
+            name="name"
+            type="text"
+            required
+            maxLength={60}
+            placeholder="Acme Co"
+            autoFocus
+          />
         </div>
-        <Button type="submit" className="w-full">Continue</Button>
+        <Button type="submit" className="w-full">
+          Continue
+        </Button>
       </form>
     </AuthCard>
   )
@@ -1578,6 +1709,7 @@ git commit -m "feat: add /onboarding page"
 ## Task 14: Build the app shell (layout, sidebar, header)
 
 **Files:**
+
 - Create: `src/app/app/layout.tsx`
 - Create: `src/components/app/app-sidebar.tsx`
 - Create: `src/components/app/app-header.tsx`
@@ -1586,6 +1718,7 @@ git commit -m "feat: add /onboarding page"
 - [ ] **Step 1: Write `AppSidebar`**
 
 `src/components/app/app-sidebar.tsx`:
+
 ```tsx
 'use client'
 
@@ -1607,10 +1740,10 @@ const NAV = [
 export function AppSidebar({ workspaceName }: { workspaceName: string }) {
   const pathname = usePathname()
   return (
-    <aside className="flex h-full w-60 shrink-0 flex-col border-r bg-card">
+    <aside className="bg-card flex h-full w-60 shrink-0 flex-col border-r">
       <div className="px-5 py-4">
         <Logo href="/app/dashboard" />
-        <p className="mt-1 text-xs text-muted-foreground">{workspaceName}</p>
+        <p className="text-muted-foreground mt-1 text-xs">{workspaceName}</p>
       </div>
       <nav className="flex-1 space-y-1 px-3">
         {NAV.map(({ href, label, icon: Icon }) => {
@@ -1622,7 +1755,7 @@ export function AppSidebar({ workspaceName }: { workspaceName: string }) {
               className={cn(
                 'flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors',
                 active
-                  ? 'bg-muted font-medium text-foreground'
+                  ? 'bg-muted text-foreground font-medium'
                   : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
               )}
             >
@@ -1640,6 +1773,7 @@ export function AppSidebar({ workspaceName }: { workspaceName: string }) {
 - [ ] **Step 2: Write `UserMenu`**
 
 `src/components/app/user-menu.tsx`:
+
 ```tsx
 'use client'
 
@@ -1656,11 +1790,22 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { logOut } from '@/lib/actions/auth'
 
-export function UserMenu({ email, displayName, avatarUrl }: { email: string; displayName: string | null; avatarUrl: string | null }) {
+export function UserMenu({
+  email,
+  displayName,
+  avatarUrl,
+}: {
+  email: string
+  displayName: string | null
+  avatarUrl: string | null
+}) {
   const initial = (displayName || email).charAt(0).toUpperCase()
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary/40" aria-label="Open user menu">
+      <DropdownMenuTrigger
+        className="focus:ring-primary/40 rounded-full focus:ring-2 focus:outline-none"
+        aria-label="Open user menu"
+      >
         <Avatar className="h-8 w-8">
           {avatarUrl && <AvatarImage src={avatarUrl} alt="" />}
           <AvatarFallback>{initial}</AvatarFallback>
@@ -1670,12 +1815,16 @@ export function UserMenu({ email, displayName, avatarUrl }: { email: string; dis
         <DropdownMenuLabel className="truncate">{displayName || email}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/app/settings/profile"><User className="mr-2 h-4 w-4" /> Profile</Link>
+          <Link href="/app/settings/profile">
+            <User className="mr-2 h-4 w-4" /> Profile
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <form action={logOut}>
           <DropdownMenuItem asChild>
-            <button type="submit" className="w-full"><LogOut className="mr-2 h-4 w-4" /> Sign out</button>
+            <button type="submit" className="w-full">
+              <LogOut className="mr-2 h-4 w-4" /> Sign out
+            </button>
           </DropdownMenuItem>
         </form>
       </DropdownMenuContent>
@@ -1687,6 +1836,7 @@ export function UserMenu({ email, displayName, avatarUrl }: { email: string; dis
 - [ ] **Step 3: Write `AppHeader`**
 
 `src/components/app/app-header.tsx`:
+
 ```tsx
 import { ThemeToggle } from '@/components/shared/theme-toggle'
 import { UserMenu } from './user-menu'
@@ -1703,7 +1853,7 @@ export function AppHeader({
   workspaceName: string
 }) {
   return (
-    <header className="flex h-14 items-center justify-between border-b bg-card px-6">
+    <header className="bg-card flex h-14 items-center justify-between border-b px-6">
       <p className="text-sm font-medium">{workspaceName}</p>
       <div className="flex items-center gap-2">
         <ThemeToggle />
@@ -1717,6 +1867,7 @@ export function AppHeader({
 - [ ] **Step 4: Write `app/layout.tsx`**
 
 `src/app/app/layout.tsx`:
+
 ```tsx
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
@@ -1729,7 +1880,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!userData.user) redirect('/log-in')
 
   const [{ data: profile }, { data: workspace }] = await Promise.all([
-    supabase.from('profiles').select('display_name, avatar_url').eq('id', userData.user.id).single(),
+    supabase
+      .from('profiles')
+      .select('display_name, avatar_url')
+      .eq('id', userData.user.id)
+      .single(),
     supabase.from('workspaces').select('name').eq('owner_id', userData.user.id).single(),
   ])
   if (!workspace) redirect('/onboarding')
@@ -1744,7 +1899,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           avatarUrl={profile?.avatar_url ?? null}
           workspaceName={workspace.name}
         />
-        <main className="flex-1 overflow-auto bg-muted/20 p-8">{children}</main>
+        <main className="bg-muted/20 flex-1 overflow-auto p-8">{children}</main>
       </div>
     </div>
   )
@@ -1754,6 +1909,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 - [ ] **Step 5: Add a redirect at `/app`**
 
 `src/app/app/page.tsx`:
+
 ```tsx
 import { redirect } from 'next/navigation'
 
@@ -1774,6 +1930,7 @@ git commit -m "feat: add app shell layout with sidebar, header, and user menu"
 ## Task 15: Build the protected pages (dashboard + 4 stubs)
 
 **Files:**
+
 - Create: `src/app/app/dashboard/page.tsx`
 - Create: `src/app/app/campaigns/page.tsx`
 - Create: `src/app/app/connections/page.tsx`
@@ -1783,6 +1940,7 @@ git commit -m "feat: add app shell layout with sidebar, header, and user menu"
 - [ ] **Step 1: Write the dashboard page**
 
 `src/app/app/dashboard/page.tsx`:
+
 ```tsx
 import { Plug } from 'lucide-react'
 import Link from 'next/link'
@@ -1795,7 +1953,7 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">Overview · Last 7 days</p>
+        <p className="text-muted-foreground text-sm">Overview · Last 7 days</p>
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Spend" value="—" />
@@ -1821,6 +1979,7 @@ export default function DashboardPage() {
 - [ ] **Step 2: Write the four stub pages — same shape with different labels**
 
 `src/app/app/campaigns/page.tsx`:
+
 ```tsx
 import { Megaphone } from 'lucide-react'
 import { EmptyState } from '@/components/shared/empty-state'
@@ -1840,6 +1999,7 @@ export default function CampaignsPage() {
 ```
 
 `src/app/app/connections/page.tsx`:
+
 ```tsx
 import { Plug } from 'lucide-react'
 import { EmptyState } from '@/components/shared/empty-state'
@@ -1859,6 +2019,7 @@ export default function ConnectionsPage() {
 ```
 
 `src/app/app/automation/page.tsx`:
+
 ```tsx
 import { Cog } from 'lucide-react'
 import { EmptyState } from '@/components/shared/empty-state'
@@ -1878,6 +2039,7 @@ export default function AutomationPage() {
 ```
 
 `src/app/app/reports/page.tsx`:
+
 ```tsx
 import { BarChart3 } from 'lucide-react'
 import { EmptyState } from '@/components/shared/empty-state'
@@ -1901,6 +2063,7 @@ export default function ReportsPage() {
 ```bash
 pnpm dev
 ```
+
 Sign up → onboard → land on `/app/dashboard`. Click each sidebar item, confirm each page renders. Stop dev.
 
 - [ ] **Step 4: Commit**
@@ -1915,6 +2078,7 @@ git commit -m "feat: add dashboard + 4 protected stub pages"
 ## Task 16: Build the settings pages (profile, workspace, account)
 
 **Files:**
+
 - Create: `src/app/app/settings/layout.tsx`
 - Create: `src/app/app/settings/profile/page.tsx`
 - Create: `src/app/app/settings/workspace/page.tsx`
@@ -1924,6 +2088,7 @@ git commit -m "feat: add dashboard + 4 protected stub pages"
 - [ ] **Step 1: Write the settings layout (sub-nav)**
 
 `src/app/app/settings/layout.tsx`:
+
 ```tsx
 import Link from 'next/link'
 
@@ -1942,7 +2107,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
           <Link
             key={t.href}
             href={t.href}
-            className="border-b-2 border-transparent px-3 py-2 text-sm text-muted-foreground hover:border-muted-foreground/30 hover:text-foreground"
+            className="text-muted-foreground hover:border-muted-foreground/30 hover:text-foreground border-b-2 border-transparent px-3 py-2 text-sm"
           >
             {t.label}
           </Link>
@@ -1959,6 +2124,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
 - [ ] **Step 2: Write `AvatarUpload`**
 
 `src/components/app/avatar-upload.tsx`:
+
 ```tsx
 'use client'
 
@@ -1968,7 +2134,15 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
-export function AvatarUpload({ userId, initialUrl, fallback }: { userId: string; initialUrl: string | null; fallback: string }) {
+export function AvatarUpload({
+  userId,
+  initialUrl,
+  fallback,
+}: {
+  userId: string
+  initialUrl: string | null
+  fallback: string
+}) {
   const [url, setUrl] = useState(initialUrl)
   const [busy, setBusy] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -1978,7 +2152,9 @@ export function AvatarUpload({ userId, initialUrl, fallback }: { userId: string;
     setBusy(true)
     const ext = file.name.split('.').pop() || 'png'
     const path = `${userId}/avatar.${ext}`
-    const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type })
+    const { error } = await supabase.storage
+      .from('avatars')
+      .upload(path, file, { upsert: true, contentType: file.type })
     if (error) {
       toast.error(error.message)
       setBusy(false)
@@ -2018,7 +2194,7 @@ export function AvatarUpload({ userId, initialUrl, fallback }: { userId: string;
             if (f) onFile(f)
           }}
         />
-        <p className="mt-1 text-xs text-muted-foreground">PNG, JPG, or WEBP. Max 2 MB.</p>
+        <p className="text-muted-foreground mt-1 text-xs">PNG, JPG, or WEBP. Max 2 MB.</p>
       </div>
     </div>
   )
@@ -2028,6 +2204,7 @@ export function AvatarUpload({ userId, initialUrl, fallback }: { userId: string;
 - [ ] **Step 3: Write the profile settings page**
 
 `src/app/app/settings/profile/page.tsx`:
+
 ```tsx
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
@@ -2056,12 +2233,21 @@ export default async function ProfileSettingsPage() {
         <CardTitle>Profile</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <AvatarUpload userId={user.id} initialUrl={profile?.avatar_url ?? null} fallback={fallback} />
+        <AvatarUpload
+          userId={user.id}
+          initialUrl={profile?.avatar_url ?? null}
+          fallback={fallback}
+        />
         <Separator />
         <form action={updateProfile} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="display_name">Display name</Label>
-            <Input id="display_name" name="display_name" defaultValue={profile?.display_name ?? ''} maxLength={80} />
+            <Input
+              id="display_name"
+              name="display_name"
+              defaultValue={profile?.display_name ?? ''}
+              maxLength={80}
+            />
           </div>
           <div className="space-y-2">
             <Label>Email</Label>
@@ -2078,6 +2264,7 @@ export default async function ProfileSettingsPage() {
 - [ ] **Step 4: Write the workspace settings page**
 
 `src/app/app/settings/workspace/page.tsx`:
+
 ```tsx
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
@@ -2097,17 +2284,27 @@ export default async function WorkspaceSettingsPage() {
 
   return (
     <Card>
-      <CardHeader><CardTitle>Workspace</CardTitle></CardHeader>
+      <CardHeader>
+        <CardTitle>Workspace</CardTitle>
+      </CardHeader>
       <CardContent>
         <form action={updateWorkspace} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Workspace name</Label>
-            <Input id="name" name="name" defaultValue={workspace?.name ?? ''} maxLength={60} required />
+            <Input
+              id="name"
+              name="name"
+              defaultValue={workspace?.name ?? ''}
+              maxLength={60}
+              required
+            />
           </div>
           <div className="space-y-2">
             <Label>Slug</Label>
             <Input value={workspace?.slug ?? ''} disabled />
-            <p className="text-xs text-muted-foreground">Slug is generated from the name and cannot be changed in v1.</p>
+            <p className="text-muted-foreground text-xs">
+              Slug is generated from the name and cannot be changed in v1.
+            </p>
           </div>
           <Button type="submit">Save changes</Button>
         </form>
@@ -2120,6 +2317,7 @@ export default async function WorkspaceSettingsPage() {
 - [ ] **Step 5: Write the account settings page (delete account)**
 
 `src/app/app/settings/account/page.tsx`:
+
 ```tsx
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -2136,7 +2334,9 @@ export default function AccountSettingsPage() {
         </CardHeader>
         <CardContent>
           <form action={logOut}>
-            <Button type="submit" variant="outline">Sign out</Button>
+            <Button type="submit" variant="outline">
+              Sign out
+            </Button>
           </form>
         </CardContent>
       </Card>
@@ -2145,12 +2345,15 @@ export default function AccountSettingsPage() {
         <CardHeader>
           <CardTitle className="text-destructive">Delete account</CardTitle>
           <CardDescription>
-            Permanently delete your account, profile, workspace, and all associated data. This cannot be undone.
+            Permanently delete your account, profile, workspace, and all associated data. This
+            cannot be undone.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form action={deleteAccount}>
-            <Button type="submit" variant="destructive">Delete my account</Button>
+            <Button type="submit" variant="destructive">
+              Delete my account
+            </Button>
           </form>
         </CardContent>
       </Card>
@@ -2171,6 +2374,7 @@ git commit -m "feat: add settings pages (profile + workspace + account) and avat
 ## Task 17: Build the `(marketing)` shell — header, footer, layout
 
 **Files:**
+
 - Create: `src/app/(marketing)/layout.tsx`
 - Create: `src/components/marketing/marketing-header.tsx`
 - Create: `src/components/marketing/marketing-footer.tsx`
@@ -2178,6 +2382,7 @@ git commit -m "feat: add settings pages (profile + workspace + account) and avat
 - [ ] **Step 1: Write `MarketingHeader`**
 
 `src/components/marketing/marketing-header.tsx`:
+
 ```tsx
 import Link from 'next/link'
 import { Logo } from '@/components/shared/logo'
@@ -2192,11 +2397,11 @@ const NAV = [
 
 export function MarketingHeader() {
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
+    <header className="bg-background/80 sticky top-0 z-40 border-b backdrop-blur">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
         <div className="flex items-center gap-8">
           <Logo />
-          <nav className="hidden gap-6 text-sm text-muted-foreground md:flex">
+          <nav className="text-muted-foreground hidden gap-6 text-sm md:flex">
             {NAV.map((n) => (
               <Link key={n.href} href={n.href} className="hover:text-foreground">
                 {n.label}
@@ -2221,6 +2426,7 @@ export function MarketingHeader() {
 - [ ] **Step 2: Write `MarketingFooter`**
 
 `src/components/marketing/marketing-footer.tsx`:
+
 ```tsx
 import Link from 'next/link'
 import { Logo } from '@/components/shared/logo'
@@ -2231,31 +2437,57 @@ export function MarketingFooter() {
       <div className="mx-auto grid max-w-6xl grid-cols-2 gap-8 px-6 py-12 md:grid-cols-4">
         <div>
           <Logo />
-          <p className="mt-2 text-sm text-muted-foreground">Manage Google + Meta Ads from one place.</p>
+          <p className="text-muted-foreground mt-2 text-sm">
+            Manage Google + Meta Ads from one place.
+          </p>
         </div>
         <div>
           <h4 className="mb-3 text-sm font-semibold">Product</h4>
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li><Link href="/features" className="hover:text-foreground">Features</Link></li>
-            <li><Link href="/pricing" className="hover:text-foreground">Pricing</Link></li>
-            <li><Link href="/faq" className="hover:text-foreground">FAQ</Link></li>
+          <ul className="text-muted-foreground space-y-2 text-sm">
+            <li>
+              <Link href="/features" className="hover:text-foreground">
+                Features
+              </Link>
+            </li>
+            <li>
+              <Link href="/pricing" className="hover:text-foreground">
+                Pricing
+              </Link>
+            </li>
+            <li>
+              <Link href="/faq" className="hover:text-foreground">
+                FAQ
+              </Link>
+            </li>
           </ul>
         </div>
         <div>
           <h4 className="mb-3 text-sm font-semibold">Resources</h4>
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li><Link href="/blog" className="hover:text-foreground">Blog</Link></li>
+          <ul className="text-muted-foreground space-y-2 text-sm">
+            <li>
+              <Link href="/blog" className="hover:text-foreground">
+                Blog
+              </Link>
+            </li>
           </ul>
         </div>
         <div>
           <h4 className="mb-3 text-sm font-semibold">Legal</h4>
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li><Link href="/legal/privacy" className="hover:text-foreground">Privacy</Link></li>
-            <li><Link href="/legal/terms" className="hover:text-foreground">Terms</Link></li>
+          <ul className="text-muted-foreground space-y-2 text-sm">
+            <li>
+              <Link href="/legal/privacy" className="hover:text-foreground">
+                Privacy
+              </Link>
+            </li>
+            <li>
+              <Link href="/legal/terms" className="hover:text-foreground">
+                Terms
+              </Link>
+            </li>
           </ul>
         </div>
       </div>
-      <div className="border-t py-6 text-center text-xs text-muted-foreground">
+      <div className="text-muted-foreground border-t py-6 text-center text-xs">
         © {new Date().getFullYear()} autoads. All rights reserved.
       </div>
     </footer>
@@ -2266,6 +2498,7 @@ export function MarketingFooter() {
 - [ ] **Step 3: Write `(marketing)/layout.tsx`**
 
 `src/app/(marketing)/layout.tsx`:
+
 ```tsx
 import { MarketingFooter } from '@/components/marketing/marketing-footer'
 import { MarketingHeader } from '@/components/marketing/marketing-header'
@@ -2299,6 +2532,7 @@ git commit -m "feat: add (marketing) layout with header and footer"
 ## Task 18: Build the landing page
 
 **Files:**
+
 - Modify: `src/app/(marketing)/page.tsx`
 - Create: `src/components/marketing/hero.tsx`
 - Create: `src/components/marketing/feature-grid.tsx`
@@ -2308,6 +2542,7 @@ git commit -m "feat: add (marketing) layout with header and footer"
 - [ ] **Step 1: Write `Hero`**
 
 `src/components/marketing/hero.tsx`:
+
 ```tsx
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -2315,11 +2550,12 @@ import { Button } from '@/components/ui/button'
 export function Hero() {
   return (
     <section className="mx-auto max-w-4xl px-6 pt-20 pb-16 text-center">
-      <h1 className="text-balance text-4xl font-bold tracking-tight md:text-6xl">
+      <h1 className="text-4xl font-bold tracking-tight text-balance md:text-6xl">
         Smarter ad campaigns, <span className="text-primary">less manual work.</span>
       </h1>
-      <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-        Connect Google Ads and Meta Ads in 60 seconds. Get unified reporting, automate the busywork, and ship better campaigns faster.
+      <p className="text-muted-foreground mx-auto mt-6 max-w-2xl text-lg">
+        Connect Google Ads and Meta Ads in 60 seconds. Get unified reporting, automate the busywork,
+        and ship better campaigns faster.
       </p>
       <div className="mt-8 flex justify-center gap-3">
         <Button size="lg" asChild>
@@ -2337,14 +2573,31 @@ export function Hero() {
 - [ ] **Step 2: Write `FeatureGrid`**
 
 `src/components/marketing/feature-grid.tsx`:
+
 ```tsx
 import { Plug, BarChart3, Cog, Megaphone } from 'lucide-react'
 
 const FEATURES = [
-  { icon: Plug, title: 'Unified connections', body: 'OAuth into Google Ads and Meta Ads. We handle the token plumbing.' },
-  { icon: BarChart3, title: 'One dashboard', body: 'Spend, ROAS, conversions across both platforms with daily granularity.' },
-  { icon: Megaphone, title: 'Create ads in-app', body: 'Launch a Google Search or Meta single-image ad without context-switching.' },
-  { icon: Cog, title: 'Automation rules', body: 'Pause underperformers and reallocate budget automatically.' },
+  {
+    icon: Plug,
+    title: 'Unified connections',
+    body: 'OAuth into Google Ads and Meta Ads. We handle the token plumbing.',
+  },
+  {
+    icon: BarChart3,
+    title: 'One dashboard',
+    body: 'Spend, ROAS, conversions across both platforms with daily granularity.',
+  },
+  {
+    icon: Megaphone,
+    title: 'Create ads in-app',
+    body: 'Launch a Google Search or Meta single-image ad without context-switching.',
+  },
+  {
+    icon: Cog,
+    title: 'Automation rules',
+    body: 'Pause underperformers and reallocate budget automatically.',
+  },
 ] as const
 
 export function FeatureGrid() {
@@ -2356,9 +2609,9 @@ export function FeatureGrid() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {FEATURES.map(({ icon: Icon, title, body }) => (
           <div key={title} className="rounded-lg border p-6">
-            <Icon className="h-8 w-8 text-primary" />
+            <Icon className="text-primary h-8 w-8" />
             <h3 className="mt-4 text-lg font-semibold">{title}</h3>
-            <p className="mt-2 text-sm text-muted-foreground">{body}</p>
+            <p className="text-muted-foreground mt-2 text-sm">{body}</p>
           </div>
         ))}
       </div>
@@ -2370,11 +2623,24 @@ export function FeatureGrid() {
 - [ ] **Step 3: Write `HowItWorks`**
 
 `src/components/marketing/how-it-works.tsx`:
+
 ```tsx
 const STEPS = [
-  { n: '01', title: 'Sign up free', body: 'Create an account in 30 seconds. No credit card required.' },
-  { n: '02', title: 'Connect your ad accounts', body: 'OAuth into Google Ads and Meta Ads. Read-only by default.' },
-  { n: '03', title: 'Optimise and grow', body: 'Use the dashboard, run automation rules, create new ads in-app.' },
+  {
+    n: '01',
+    title: 'Sign up free',
+    body: 'Create an account in 30 seconds. No credit card required.',
+  },
+  {
+    n: '02',
+    title: 'Connect your ad accounts',
+    body: 'OAuth into Google Ads and Meta Ads. Read-only by default.',
+  },
+  {
+    n: '03',
+    title: 'Optimise and grow',
+    body: 'Use the dashboard, run automation rules, create new ads in-app.',
+  },
 ] as const
 
 export function HowItWorks() {
@@ -2386,9 +2652,9 @@ export function HowItWorks() {
       <div className="grid gap-8 md:grid-cols-3">
         {STEPS.map(({ n, title, body }) => (
           <div key={n}>
-            <p className="text-sm font-semibold text-primary">{n}</p>
+            <p className="text-primary text-sm font-semibold">{n}</p>
             <h3 className="mt-2 text-xl font-semibold">{title}</h3>
-            <p className="mt-2 text-muted-foreground">{body}</p>
+            <p className="text-muted-foreground mt-2">{body}</p>
           </div>
         ))}
       </div>
@@ -2400,15 +2666,16 @@ export function HowItWorks() {
 - [ ] **Step 4: Write `CTASection`**
 
 `src/components/marketing/cta-section.tsx`:
+
 ```tsx
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 
 export function CTASection() {
   return (
-    <section className="mx-auto my-16 max-w-3xl rounded-2xl bg-primary px-8 py-16 text-center text-primary-foreground">
+    <section className="bg-primary text-primary-foreground mx-auto my-16 max-w-3xl rounded-2xl px-8 py-16 text-center">
       <h2 className="text-3xl font-bold">Ready to consolidate your ad ops?</h2>
-      <p className="mx-auto mt-3 max-w-xl text-primary-foreground/80">
+      <p className="text-primary-foreground/80 mx-auto mt-3 max-w-xl">
         Get started in under a minute. Free during beta.
       </p>
       <Button size="lg" variant="secondary" className="mt-6" asChild>
@@ -2451,6 +2718,7 @@ git commit -m "feat: build landing page (Hero, FeatureGrid, HowItWorks, CTA)"
 ## Task 19: Build the pricing, FAQ, features, blog, and legal pages
 
 **Files:**
+
 - Create: `src/app/(marketing)/pricing/page.tsx`
 - Create: `src/app/(marketing)/faq/page.tsx`
 - Create: `src/app/(marketing)/features/page.tsx`
@@ -2474,6 +2742,7 @@ pnpm dlx shadcn@latest add accordion
 - [ ] **Step 2: Write `PricingTierCards`**
 
 `src/components/marketing/pricing-tier-cards.tsx`:
+
 ```tsx
 import Link from 'next/link'
 import { Check } from 'lucide-react'
@@ -2501,7 +2770,12 @@ const TIERS = [
     blurb: 'For agencies and at-scale teams.',
     price: 'Pricing announced soon',
     cta: 'Notify me',
-    features: ['Unlimited workspaces', 'Unlimited connected accounts', 'Automation rules', 'Priority support'],
+    features: [
+      'Unlimited workspaces',
+      'Unlimited connected accounts',
+      'Automation rules',
+      'Priority support',
+    ],
   },
 ] as const
 
@@ -2519,7 +2793,7 @@ export function PricingTierCards() {
             <ul className="space-y-2">
               {t.features.map((f) => (
                 <li key={f} className="flex items-start gap-2 text-sm">
-                  <Check className="mt-0.5 h-4 w-4 text-primary" /> {f}
+                  <Check className="text-primary mt-0.5 h-4 w-4" /> {f}
                 </li>
               ))}
             </ul>
@@ -2537,15 +2811,36 @@ export function PricingTierCards() {
 - [ ] **Step 3: Write `FAQAccordion`**
 
 `src/components/marketing/faq-accordion.tsx`:
+
 ```tsx
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
 
 const FAQ = [
-  { q: 'Do you store my ad account credentials?', a: 'No — we use OAuth, so we receive a scoped access token from Google and Meta. You can revoke access at any time.' },
-  { q: 'Which platforms do you support?', a: 'Google Ads and Meta Ads (Facebook + Instagram) at launch.' },
-  { q: 'Can I create ads from autoads?', a: 'Yes — Pro and Business plans support creating Google Search ads and Meta single-image ads directly inside the app.' },
-  { q: 'Is there a free plan?', a: 'Yes. The Free plan covers one workspace and one connected ad account, with a read-only dashboard.' },
-  { q: 'Where is my data stored?', a: 'In a secure Postgres database hosted on Supabase (US region).' },
+  {
+    q: 'Do you store my ad account credentials?',
+    a: 'No — we use OAuth, so we receive a scoped access token from Google and Meta. You can revoke access at any time.',
+  },
+  {
+    q: 'Which platforms do you support?',
+    a: 'Google Ads and Meta Ads (Facebook + Instagram) at launch.',
+  },
+  {
+    q: 'Can I create ads from autoads?',
+    a: 'Yes — Pro and Business plans support creating Google Search ads and Meta single-image ads directly inside the app.',
+  },
+  {
+    q: 'Is there a free plan?',
+    a: 'Yes. The Free plan covers one workspace and one connected ad account, with a read-only dashboard.',
+  },
+  {
+    q: 'Where is my data stored?',
+    a: 'In a secure Postgres database hosted on Supabase (US region).',
+  },
 ] as const
 
 export function FAQAccordion() {
@@ -2565,16 +2860,25 @@ export function FAQAccordion() {
 - [ ] **Step 4: Write `FeaturePageHero`**
 
 `src/components/marketing/feature-page-hero.tsx`:
+
 ```tsx
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 
-export function FeaturePageHero({ eyebrow, title, body }: { eyebrow: string; title: string; body: string }) {
+export function FeaturePageHero({
+  eyebrow,
+  title,
+  body,
+}: {
+  eyebrow: string
+  title: string
+  body: string
+}) {
   return (
     <section className="mx-auto max-w-4xl px-6 pt-16 pb-12 text-center">
-      <p className="text-sm font-semibold uppercase tracking-wider text-primary">{eyebrow}</p>
-      <h1 className="mt-2 text-balance text-4xl font-bold tracking-tight md:text-5xl">{title}</h1>
-      <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">{body}</p>
+      <p className="text-primary text-sm font-semibold tracking-wider uppercase">{eyebrow}</p>
+      <h1 className="mt-2 text-4xl font-bold tracking-tight text-balance md:text-5xl">{title}</h1>
+      <p className="text-muted-foreground mx-auto mt-6 max-w-2xl text-lg">{body}</p>
       <div className="mt-8">
         <Button size="lg" asChild>
           <Link href="/sign-up">Start free</Link>
@@ -2588,6 +2892,7 @@ export function FeaturePageHero({ eyebrow, title, body }: { eyebrow: string; tit
 - [ ] **Step 5: Write each marketing page**
 
 `src/app/(marketing)/pricing/page.tsx`:
+
 ```tsx
 import { PricingTierCards } from '@/components/marketing/pricing-tier-cards'
 
@@ -2598,7 +2903,7 @@ export default function PricingPage() {
     <>
       <section className="mx-auto max-w-2xl px-6 pt-16 pb-12 text-center">
         <h1 className="text-4xl font-bold">Simple pricing</h1>
-        <p className="mt-3 text-muted-foreground">Start free. Upgrade when you need more.</p>
+        <p className="text-muted-foreground mt-3">Start free. Upgrade when you need more.</p>
       </section>
       <PricingTierCards />
     </>
@@ -2607,6 +2912,7 @@ export default function PricingPage() {
 ```
 
 `src/app/(marketing)/faq/page.tsx`:
+
 ```tsx
 import { FAQAccordion } from '@/components/marketing/faq-accordion'
 
@@ -2625,14 +2931,27 @@ export default function FaqPage() {
 ```
 
 `src/app/(marketing)/features/page.tsx`:
+
 ```tsx
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 const FEATURES = [
-  { href: '/features/google-ads', title: 'Google Ads', body: 'Manage Search, Display, and Performance Max campaigns.' },
-  { href: '/features/meta-ads', title: 'Meta Ads', body: 'Manage Facebook and Instagram campaigns from one place.' },
-  { href: '/features/automation', title: 'Automation', body: 'Set up rules that pause, resume, and rebudget automatically.' },
+  {
+    href: '/features/google-ads',
+    title: 'Google Ads',
+    body: 'Manage Search, Display, and Performance Max campaigns.',
+  },
+  {
+    href: '/features/meta-ads',
+    title: 'Meta Ads',
+    body: 'Manage Facebook and Instagram campaigns from one place.',
+  },
+  {
+    href: '/features/automation',
+    title: 'Automation',
+    body: 'Set up rules that pause, resume, and rebudget automatically.',
+  },
 ] as const
 
 export const metadata = { title: 'Features — autoads' }
@@ -2642,18 +2961,18 @@ export default function FeaturesPage() {
     <>
       <section className="mx-auto max-w-2xl px-6 pt-16 pb-12 text-center">
         <h1 className="text-4xl font-bold">Features</h1>
-        <p className="mt-3 text-muted-foreground">Everything you need to run paid campaigns.</p>
+        <p className="text-muted-foreground mt-3">Everything you need to run paid campaigns.</p>
       </section>
       <div className="mx-auto grid max-w-5xl gap-6 px-6 md:grid-cols-3">
         {FEATURES.map((f) => (
           <Link key={f.href} href={f.href}>
-            <Card className="h-full transition-colors hover:border-primary">
+            <Card className="hover:border-primary h-full transition-colors">
               <CardHeader>
                 <CardTitle>{f.title}</CardTitle>
                 <CardDescription>{f.body}</CardDescription>
               </CardHeader>
               <CardContent>
-                <span className="text-sm font-medium text-primary">Learn more →</span>
+                <span className="text-primary text-sm font-medium">Learn more →</span>
               </CardContent>
             </Card>
           </Link>
@@ -2665,6 +2984,7 @@ export default function FeaturesPage() {
 ```
 
 `src/app/(marketing)/features/google-ads/page.tsx`:
+
 ```tsx
 import { FeaturePageHero } from '@/components/marketing/feature-page-hero'
 
@@ -2682,6 +3002,7 @@ export default function GoogleAdsFeaturePage() {
 ```
 
 `src/app/(marketing)/features/meta-ads/page.tsx`:
+
 ```tsx
 import { FeaturePageHero } from '@/components/marketing/feature-page-hero'
 
@@ -2699,6 +3020,7 @@ export default function MetaAdsFeaturePage() {
 ```
 
 `src/app/(marketing)/features/automation/page.tsx`:
+
 ```tsx
 import { FeaturePageHero } from '@/components/marketing/feature-page-hero'
 
@@ -2716,6 +3038,7 @@ export default function AutomationFeaturePage() {
 ```
 
 `src/app/(marketing)/blog/page.tsx`:
+
 ```tsx
 export const metadata = { title: 'Blog — autoads' }
 
@@ -2723,13 +3046,16 @@ export default function BlogPage() {
   return (
     <section className="mx-auto max-w-3xl px-6 pt-16 pb-24">
       <h1 className="text-4xl font-bold">Blog</h1>
-      <p className="mt-3 text-muted-foreground">Articles on paid ads, automation, and growth — coming soon.</p>
+      <p className="text-muted-foreground mt-3">
+        Articles on paid ads, automation, and growth — coming soon.
+      </p>
     </section>
   )
 }
 ```
 
 `src/app/(marketing)/blog/[slug]/page.tsx`:
+
 ```tsx
 import { notFound } from 'next/navigation'
 
@@ -2742,19 +3068,23 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 ```
 
 `src/app/(marketing)/legal/privacy/page.tsx`:
+
 ```tsx
 export const metadata = { title: 'Privacy — autoads' }
 
 export default function PrivacyPage() {
   return (
-    <article className="prose mx-auto max-w-2xl px-6 pt-16 pb-24 dark:prose-invert">
+    <article className="prose dark:prose-invert mx-auto max-w-2xl px-6 pt-16 pb-24">
       <h1>Privacy Policy</h1>
       <p>Last updated: 2026-04-22.</p>
       <p>
-        autoads collects only the data necessary to operate the service: your email address, workspace name, and OAuth tokens for connected ad accounts. We do not sell or share your personal data with third parties.
+        autoads collects only the data necessary to operate the service: your email address,
+        workspace name, and OAuth tokens for connected ad accounts. We do not sell or share your
+        personal data with third parties.
       </p>
       <p>
-        For questions, contact <a href="mailto:hello@autoads.app">hello@autoads.app</a>. This is a placeholder text — replace with your final policy before public launch.
+        For questions, contact <a href="mailto:hello@autoads.app">hello@autoads.app</a>. This is a
+        placeholder text — replace with your final policy before public launch.
       </p>
     </article>
   )
@@ -2762,16 +3092,19 @@ export default function PrivacyPage() {
 ```
 
 `src/app/(marketing)/legal/terms/page.tsx`:
+
 ```tsx
 export const metadata = { title: 'Terms — autoads' }
 
 export default function TermsPage() {
   return (
-    <article className="prose mx-auto max-w-2xl px-6 pt-16 pb-24 dark:prose-invert">
+    <article className="prose dark:prose-invert mx-auto max-w-2xl px-6 pt-16 pb-24">
       <h1>Terms of Service</h1>
       <p>Last updated: 2026-04-22.</p>
       <p>
-        By using autoads you agree to use the service in accordance with applicable laws and the policies of any connected ad platforms. This is a placeholder text — replace with your final terms before public launch.
+        By using autoads you agree to use the service in accordance with applicable laws and the
+        policies of any connected ad platforms. This is a placeholder text — replace with your final
+        terms before public launch.
       </p>
     </article>
   )
@@ -2798,6 +3131,7 @@ git commit -m "feat: build pricing, FAQ, features (3 sub-pages), blog scaffold, 
 ## Task 20: Add the `/api/health` endpoint
 
 **Files:**
+
 - Create: `src/app/api/health/route.ts`
 
 - [ ] **Step 1: Write the route handler**
@@ -2818,6 +3152,7 @@ export async function GET() {
 pnpm dev
 curl -s http://localhost:3000/api/health
 ```
+
 Expected: `{"status":"ok","time":"2026-..."}`. Stop dev.
 
 - [ ] **Step 3: Commit**
@@ -2832,6 +3167,7 @@ git commit -m "feat: add /api/health endpoint"
 ## Task 21: Wire up Sentry
 
 **Files:**
+
 - Create: `sentry.client.config.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts`
 - Create: `src/lib/sentry/with-error-tracking.ts`
 - Modify: `next.config.ts`
@@ -2842,6 +3178,7 @@ git commit -m "feat: add /api/health endpoint"
 ```bash
 pnpm dlx @sentry/wizard@latest -i nextjs
 ```
+
 Choose: existing project, App Router. Provide your Sentry DSN (you can create a free account at https://sentry.io). Wizard will write the three `sentry.*.config.ts` files and a `sentry.properties` file, plus modify `next.config.ts`.
 
 > If you don't have a Sentry account yet, skip this step for now — but mark this task as **partially complete** and revisit before deploy. Sentry is optional in dev.
@@ -2849,6 +3186,7 @@ Choose: existing project, App Router. Provide your Sentry DSN (you can create a 
 - [ ] **Step 2: Wrap Server Actions with `withErrorTracking`**
 
 `src/lib/sentry/with-error-tracking.ts`:
+
 ```ts
 import * as Sentry from '@sentry/nextjs'
 
@@ -2871,12 +3209,14 @@ export function withErrorTracking<TArgs extends unknown[], TReturn>(
 - [ ] **Step 3: Verify a deliberate error reaches Sentry**
 
 Add a temporary `/api/sentry-test` route that throws:
+
 ```ts
 // src/app/api/sentry-test/route.ts
 export async function GET() {
   throw new Error('Sentry test error')
 }
 ```
+
 Visit `http://localhost:3000/api/sentry-test` once. Confirm the error appears in your Sentry dashboard within ~30s. Then **delete the test route** and commit.
 
 - [ ] **Step 4: Commit**
@@ -2891,6 +3231,7 @@ git commit -m "feat: wire up Sentry for error tracking"
 ## Task 22: Wire up PostHog
 
 **Files:**
+
 - Create: `src/lib/posthog/client.ts`
 - Create: `src/lib/posthog/server.ts`
 - Create: `src/components/shared/posthog-provider.tsx`
@@ -2946,7 +3287,11 @@ export function getServerPosthog() {
   return client
 }
 
-export async function captureServer(distinctId: string, event: string, props?: Record<string, unknown>) {
+export async function captureServer(
+  distinctId: string,
+  event: string,
+  props?: Record<string, unknown>,
+) {
   const ph = getServerPosthog()
   if (!ph) return
   ph.capture({ distinctId, event, properties: props })
@@ -2957,6 +3302,7 @@ export async function captureServer(distinctId: string, event: string, props?: R
 - [ ] **Step 4: Write the provider**
 
 `src/components/shared/posthog-provider.tsx`:
+
 ```tsx
 'use client'
 import { useEffect } from 'react'
@@ -2971,6 +3317,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
 ```
 
 Mount it in `src/app/layout.tsx`, inside `ThemeProvider`:
+
 ```tsx
 <ThemeProvider ...>
   <PostHogProvider>{children}</PostHogProvider>
@@ -2981,6 +3328,7 @@ Mount it in `src/app/layout.tsx`, inside `ThemeProvider`:
 - [ ] **Step 5: Identify the user inside the protected app shell**
 
 `src/components/app/identify-user.tsx`:
+
 ```tsx
 'use client'
 import { useEffect } from 'react'
@@ -2996,6 +3344,7 @@ export function IdentifyUser({ id, email }: { id: string; email: string }) {
 ```
 
 In `src/app/app/layout.tsx`, add inside the returned tree (anywhere — it renders nothing):
+
 ```tsx
 <IdentifyUser id={userData.user.id} email={userData.user.email ?? ''} />
 ```
@@ -3003,6 +3352,7 @@ In `src/app/app/layout.tsx`, add inside the returned tree (anywhere — it rende
 - [ ] **Step 6: Fire server-side events from Server Actions**
 
 In `src/lib/actions/auth.ts`, after each successful auth call, before the redirect:
+
 ```ts
 import { captureServer } from '@/lib/posthog/server'
 
@@ -3028,6 +3378,7 @@ await captureServer(parsed.data.email, 'password_reset_requested')
 ```
 
 In `src/lib/actions/onboarding.ts`, after successful insert:
+
 ```ts
 await captureServer(userData.user.id, 'onboarding_completed', {
   workspace_name_length: parsed.data.name.length,
@@ -3035,6 +3386,7 @@ await captureServer(userData.user.id, 'onboarding_completed', {
 ```
 
 In `src/app/app/dashboard/page.tsx`, capture first-view client-side. Add a small client component:
+
 ```tsx
 // src/components/app/track-dashboard-view.tsx
 'use client'
@@ -3048,6 +3400,7 @@ export function TrackDashboardView() {
   return null
 }
 ```
+
 Render it in the dashboard page above the rest of the JSX.
 
 - [ ] **Step 7: Commit**
@@ -3062,6 +3415,7 @@ git commit -m "feat: wire up PostHog (client init, server captures, identify, ke
 ## Task 23: Add unit tests for `env` and middleware path matching
 
 **Files:**
+
 - Create: `tests/unit/env.test.ts`
 - Create: `tests/unit/middleware-paths.test.ts`
 
@@ -3108,6 +3462,7 @@ describe('middleware path matching', () => {
 ```bash
 pnpm test
 ```
+
 Expected: all tests pass (slug + env + middleware = at least 13 tests).
 
 - [ ] **Step 4: Commit**
@@ -3122,6 +3477,7 @@ git commit -m "test: add env validation + middleware path matching unit tests"
 ## Task 24: Add Playwright E2E tests
 
 **Files:**
+
 - Create: `playwright.config.ts`
 - Create: `tests/e2e/auth.spec.ts`
 - Create: `tests/e2e/marketing.spec.ts`
@@ -3157,6 +3513,7 @@ export default defineConfig({
 - [ ] **Step 3: Add scripts**
 
 In `package.json` `scripts`:
+
 ```json
 "test:e2e": "playwright test",
 "test:e2e:ui": "playwright test --ui"
@@ -3171,7 +3528,16 @@ test('marketing pages render with no console errors', async ({ page }) => {
   const errors: string[] = []
   page.on('console', (msg) => msg.type() === 'error' && errors.push(msg.text()))
 
-  for (const path of ['/', '/pricing', '/faq', '/features', '/features/google-ads', '/blog', '/legal/privacy', '/legal/terms']) {
+  for (const path of [
+    '/',
+    '/pricing',
+    '/faq',
+    '/features',
+    '/features/google-ads',
+    '/blog',
+    '/legal/privacy',
+    '/legal/terms',
+  ]) {
     await page.goto(path)
     await expect(page).toHaveTitle(/autoads/i)
   }
@@ -3220,6 +3586,7 @@ Make sure local Supabase is running (`supabase start`) and dev server is NOT alr
 ```bash
 pnpm test:e2e
 ```
+
 Expected: 2 tests pass.
 
 - [ ] **Step 7: Commit**
@@ -3240,6 +3607,7 @@ git commit -m "test: add Playwright E2E tests (marketing pages + full auth happy
 ```bash
 gh repo create marios/autoads --private --source=. --push
 ```
+
 If `gh` is not installed: `brew install gh && gh auth login`.
 
 Expected: Repo created at `https://github.com/marios/autoads`; current branch pushed.
@@ -3249,6 +3617,7 @@ Expected: Repo created at `https://github.com/marios/autoads`; current branch pu
 ```bash
 pnpm dlx vercel link
 ```
+
 Choose: link to existing or create new. Project name `autoads`. Confirm framework preset = Next.js.
 
 - [ ] **Step 3: Create a production Supabase project**
@@ -3256,6 +3625,7 @@ Choose: link to existing or create new. Project name `autoads`. Confirm framewor
 Visit `https://supabase.com/dashboard` → New Project → name `autoads` → choose region near you. Wait ~2 min for provisioning.
 
 Save these values for the next step (you can find them in Project Settings → API and Project Settings → Database):
+
 - Project URL (`https://<ref>.supabase.co`)
 - `anon` public key
 - `service_role` secret key
@@ -3267,6 +3637,7 @@ Save these values for the next step (you can find them in Project Settings → A
 supabase link --project-ref <your-project-ref>
 supabase db push
 ```
+
 Expected: All three migrations applied to production.
 
 - [ ] **Step 5: Add env vars to Vercel**
@@ -3282,6 +3653,7 @@ pnpm dlx vercel env add NEXT_PUBLIC_POSTHOG_HOST production
 pnpm dlx vercel env add SENTRY_DSN production
 pnpm dlx vercel env add SENTRY_AUTH_TOKEN production
 ```
+
 Repeat each line with `preview` and `development` arguments if you want them on those environments too. (Recommended at minimum for `NEXT_PUBLIC_SITE_URL` per environment so it points at the right URL.)
 
 - [ ] **Step 6: First production deploy**
@@ -3289,6 +3661,7 @@ Repeat each line with `preview` and `development` arguments if you want them on 
 ```bash
 pnpm dlx vercel --prod
 ```
+
 Expected: Build runs, deploy succeeds. URL: `https://autoads.vercel.app` (or similar).
 
 - [ ] **Step 7: Smoke test the deployed app**
@@ -3308,6 +3681,7 @@ git push
 ## Task 26: Add CI workflow
 
 **Files:**
+
 - Create: `.github/workflows/ci.yml`
 
 - [ ] **Step 1: Write the workflow**
@@ -3375,6 +3749,7 @@ Watch the run at `https://github.com/marios/autoads/actions`. Fix any failures.
 ## Task 27: Add deploy workflow (run migrations on merge to main)
 
 **Files:**
+
 - Create: `.github/workflows/deploy.yml`
 
 - [ ] **Step 1: Generate a Supabase access token**
@@ -3442,11 +3817,13 @@ Visit `https://autoads.vercel.app`. For each row, perform the action and check t
 ```bash
 pnpm typecheck && pnpm lint && pnpm test && pnpm test:e2e
 ```
+
 Expected: all four exit 0.
 
 - [ ] **Step 3: Lighthouse**
 
 In Chrome DevTools → Lighthouse, run on the deployed `/` page in incognito, mobile profile. Confirm:
+
 - Performance ≥ 90
 - Accessibility ≥ 95
 
@@ -3457,6 +3834,7 @@ If accessibility is below 95: most common fixes are missing `alt`, missing `aria
 ```bash
 pnpm build
 ```
+
 Look at the build output table. Find the row for `/app/dashboard`. Confirm "First Load JS" < 120 KB. If over: identify the largest dependency in the dashboard route via `pnpm dlx next-bundle-analyzer` and consider lazy-loading.
 
 - [ ] **Step 5: `/api/health`**
@@ -3464,6 +3842,7 @@ Look at the build output table. Find the row for `/app/dashboard`. Confirm "Firs
 ```bash
 curl -s https://autoads.vercel.app/api/health
 ```
+
 Expected: `{"status":"ok","time":"..."}`.
 
 - [ ] **Step 6: PostHog check**
@@ -3487,31 +3866,31 @@ git push
 
 **Spec coverage:**
 
-| Spec section | Covered by tasks |
-|---|---|
-| Architecture diagram (Section 1) | 1, 6, 8 |
-| Data model + RLS + sign-up trigger (Section 1) | 7 |
-| Route map (Section 2) | 11, 13, 14, 15, 16, 17, 18, 19 |
-| Three layout shells (Section 2) | 11, 14, 17 |
-| Components inventory (Section 2) | 3, 9, 11, 14, 16, 17, 18, 19 |
-| Server vs client split (Section 2) | 11, 14, 16 (each component marked `'use client'` only when needed) |
-| Sign-up / login / forgot / reset flows (Section 3) | 10, 11, 12 |
-| Onboarding flow (Section 3) | 10, 13 |
-| Session management + middleware (Section 3) | 8, 12 |
-| Sign-out (Section 3) | 10, 14 (user menu) |
-| Password policy (Section 3) | 10 (Zod regex) — also requires Supabase project setting |
-| Security hardening (Section 3) | 10 (neutral errors), 12 (middleware), Vercel HTTPS, Supabase rate limits |
-| Analytics events (Section 3) | 22 |
-| Folder structure (Section 4) | 1, 8, 10, 11, 14, 16, 17, 22 |
-| Env vars (Section 4) | 4, 25 |
-| Local dev setup (Section 4) | 1, 6, 7 |
-| CI/CD pipeline (Section 4) | 26, 27 |
-| Testing strategy (Section 4) | 5 (slug TDD), 23 (env + middleware), 24 (E2E) |
-| Pre-commit hooks (Section 4) | 2 |
-| Sentry + PostHog (Section 4) | 21, 22 |
-| Acceptance criteria (Section 4) | 28 |
-| Avatar storage bucket (Open question) | 7, 16 |
-| Hard delete cascading (Open question) | 10 (`account.ts` uses admin API) |
+| Spec section                                       | Covered by tasks                                                         |
+| -------------------------------------------------- | ------------------------------------------------------------------------ |
+| Architecture diagram (Section 1)                   | 1, 6, 8                                                                  |
+| Data model + RLS + sign-up trigger (Section 1)     | 7                                                                        |
+| Route map (Section 2)                              | 11, 13, 14, 15, 16, 17, 18, 19                                           |
+| Three layout shells (Section 2)                    | 11, 14, 17                                                               |
+| Components inventory (Section 2)                   | 3, 9, 11, 14, 16, 17, 18, 19                                             |
+| Server vs client split (Section 2)                 | 11, 14, 16 (each component marked `'use client'` only when needed)       |
+| Sign-up / login / forgot / reset flows (Section 3) | 10, 11, 12                                                               |
+| Onboarding flow (Section 3)                        | 10, 13                                                                   |
+| Session management + middleware (Section 3)        | 8, 12                                                                    |
+| Sign-out (Section 3)                               | 10, 14 (user menu)                                                       |
+| Password policy (Section 3)                        | 10 (Zod regex) — also requires Supabase project setting                  |
+| Security hardening (Section 3)                     | 10 (neutral errors), 12 (middleware), Vercel HTTPS, Supabase rate limits |
+| Analytics events (Section 3)                       | 22                                                                       |
+| Folder structure (Section 4)                       | 1, 8, 10, 11, 14, 16, 17, 22                                             |
+| Env vars (Section 4)                               | 4, 25                                                                    |
+| Local dev setup (Section 4)                        | 1, 6, 7                                                                  |
+| CI/CD pipeline (Section 4)                         | 26, 27                                                                   |
+| Testing strategy (Section 4)                       | 5 (slug TDD), 23 (env + middleware), 24 (E2E)                            |
+| Pre-commit hooks (Section 4)                       | 2                                                                        |
+| Sentry + PostHog (Section 4)                       | 21, 22                                                                   |
+| Acceptance criteria (Section 4)                    | 28                                                                       |
+| Avatar storage bucket (Open question)              | 7, 16                                                                    |
+| Hard delete cascading (Open question)              | 10 (`account.ts` uses admin API)                                         |
 
 **Placeholder scan:** No "TBD", no "TODO" in steps. Two "Note:" callouts (forgot-password client transition state in Task 11; settings tab active styling in Task 16) are explicit acceptable simplifications, not deferred work.
 

@@ -44,6 +44,7 @@ A single Next.js 16 (App Router) application deployed to Vercel, talking to one 
 ```
 
 **Three runtime contexts in the Next.js app:**
+
 1. **Marketing** (`/`, `/pricing`, `/faq`, `/blog`, `/features/*`, `/legal/*`) — public, mostly statically generated.
 2. **Auth** (`/sign-up`, `/log-in`, `/forgot-password`, `/reset-password`) — public, dynamic, server-rendered.
 3. **App** (`/onboarding`, `/app/*`) — protected by middleware, server-rendered.
@@ -182,18 +183,18 @@ The sidebar shows: Dashboard, Campaigns, Connections, Automation, Reports, Setti
 
 ### Components built in Foundation
 
-| Component | Source | Notes |
-|---|---|---|
-| `Button`, `Input`, `Label`, `Card`, `Dialog`, `DropdownMenu`, `Avatar`, `Skeleton`, `Toast` | shadcn/ui | Copy-pasted into `src/components/ui/` |
-| `Logo` | custom | Wordmark "autoads" in indigo-600; size prop |
-| `ThemeToggle` | custom | `next-themes`; light / dark / system |
-| `MarketingHeader`, `MarketingFooter` | custom | |
-| `AuthCard` | custom | Wraps sign-up/log-in/reset forms |
-| `AppSidebar`, `AppHeader` | custom | Sidebar with active-state styling; header with workspace name + user menu |
-| `EmptyState` | custom | Reused on every stub page (icon + title + description + optional CTA) |
-| `StatCard` | custom | KPI card (label + value + trend); shows "—" everywhere in v1 |
-| Form primitives | shadcn + React Hook Form + Zod | |
-| **Marketing-page sections:** `Hero`, `FeatureGrid`, `HowItWorksSteps`, `PricingTierCards`, `FAQAccordion`, `CTASection`, `FeaturePageHero`, `LegalPageContainer`, `BlogList`, `BlogPostLayout` | custom | Used to compose the marketing pages. **`PricingTierCards` shows the three plan names (Free / Pro / Business) with bullet feature lists but uses placeholder copy ("Pricing announced soon") for actual prices — real prices land in sub-project 9.** |
+| Component                                                                                                                                                                                      | Source                         | Notes                                                                                                                                                                                                                                                |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Button`, `Input`, `Label`, `Card`, `Dialog`, `DropdownMenu`, `Avatar`, `Skeleton`, `Toast`                                                                                                    | shadcn/ui                      | Copy-pasted into `src/components/ui/`                                                                                                                                                                                                                |
+| `Logo`                                                                                                                                                                                         | custom                         | Wordmark "autoads" in indigo-600; size prop                                                                                                                                                                                                          |
+| `ThemeToggle`                                                                                                                                                                                  | custom                         | `next-themes`; light / dark / system                                                                                                                                                                                                                 |
+| `MarketingHeader`, `MarketingFooter`                                                                                                                                                           | custom                         |                                                                                                                                                                                                                                                      |
+| `AuthCard`                                                                                                                                                                                     | custom                         | Wraps sign-up/log-in/reset forms                                                                                                                                                                                                                     |
+| `AppSidebar`, `AppHeader`                                                                                                                                                                      | custom                         | Sidebar with active-state styling; header with workspace name + user menu                                                                                                                                                                            |
+| `EmptyState`                                                                                                                                                                                   | custom                         | Reused on every stub page (icon + title + description + optional CTA)                                                                                                                                                                                |
+| `StatCard`                                                                                                                                                                                     | custom                         | KPI card (label + value + trend); shows "—" everywhere in v1                                                                                                                                                                                         |
+| Form primitives                                                                                                                                                                                | shadcn + React Hook Form + Zod |                                                                                                                                                                                                                                                      |
+| **Marketing-page sections:** `Hero`, `FeatureGrid`, `HowItWorksSteps`, `PricingTierCards`, `FAQAccordion`, `CTASection`, `FeaturePageHero`, `LegalPageContainer`, `BlogList`, `BlogPostLayout` | custom                         | Used to compose the marketing pages. **`PricingTierCards` shows the three plan names (Free / Pro / Business) with bullet feature lists but uses placeholder copy ("Pricing announced soon") for actual prices — real prices land in sub-project 9.** |
 
 ### Server vs client rendering
 
@@ -232,6 +233,7 @@ The sidebar shows: Dashboard, Campaigns, Connections, Automation, Reports, Setti
 ```
 
 Middleware guarantees:
+
 - Logged-in user with no workspace landing on `/app/*` → redirected to `/onboarding`
 - Logged-in user with a workspace landing on `/onboarding`, `/sign-up`, or `/log-in` → redirected to `/app/dashboard`
 - Anonymous user landing on `/app/*` or `/onboarding` → redirected to `/log-in?redirect=<original>`
@@ -291,14 +293,14 @@ User menu → "Sign out" → Server Action calls `supabase.auth.signOut()` → r
 
 ### Analytics events
 
-| Event | Properties | Where fired |
-|---|---|---|
-| `user_signed_up` | `email_domain`, `signup_method` | sign-up Server Action |
-| `onboarding_completed` | `workspace_name_length` | onboarding Server Action |
-| `user_logged_in` | `email_domain` | log-in Server Action |
-| `user_logged_out` | — | sign-out Server Action |
-| `dashboard_viewed` | `is_first_view` (boolean) | `/app/dashboard` page |
-| `password_reset_requested` | — | forgot-password Server Action |
+| Event                      | Properties                      | Where fired                   |
+| -------------------------- | ------------------------------- | ----------------------------- |
+| `user_signed_up`           | `email_domain`, `signup_method` | sign-up Server Action         |
+| `onboarding_completed`     | `workspace_name_length`         | onboarding Server Action      |
+| `user_logged_in`           | `email_domain`                  | log-in Server Action          |
+| `user_logged_out`          | —                               | sign-out Server Action        |
+| `dashboard_viewed`         | `is_first_view` (boolean)       | `/app/dashboard` page         |
+| `password_reset_requested` | —                               | forgot-password Server Action |
 
 ---
 
@@ -411,12 +413,12 @@ pnpm dev                             # http://localhost:3000
 
 ### Testing strategy
 
-| Layer | Tool | What's covered in Foundation |
-|---|---|---|
-| **Unit** | Vitest | `slug()` collision handling + edge cases; `env.ts` validation throws; middleware path matchers |
-| **E2E** | Playwright | (1) full happy path: visit `/`, click "Sign up", complete sign-up, name workspace, land on dashboard, sign out. (2) marketing pages return 200 with no console errors. |
-| **Component** | — | None at Foundation |
-| **Visual regression** | — | Deferred |
+| Layer                 | Tool       | What's covered in Foundation                                                                                                                                           |
+| --------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Unit**              | Vitest     | `slug()` collision handling + edge cases; `env.ts` validation throws; middleware path matchers                                                                         |
+| **E2E**               | Playwright | (1) full happy path: visit `/`, click "Sign up", complete sign-up, name workspace, land on dashboard, sign out. (2) marketing pages return 200 with no console errors. |
+| **Component**         | —          | None at Foundation                                                                                                                                                     |
+| **Visual regression** | —          | Deferred                                                                                                                                                               |
 
 ### Pre-commit hooks (Husky + lint-staged)
 
@@ -432,6 +434,7 @@ On `git commit`: ESLint --fix + Prettier --write on staged files; full repo type
 ## Acceptance Criteria
 
 A new visitor can:
+
 - [ ] Land on `/`, see the marketing page, click "Sign up"
 - [ ] Sign up with email + password, name their workspace, land on `/app/dashboard`
 - [ ] See empty-state placeholders on every protected page
@@ -443,6 +446,7 @@ A new visitor can:
 - [ ] Delete account (cascade-deletes workspace)
 
 Quality gates:
+
 - [ ] All marketing pages return 200; Lighthouse landing page ≥90 perf / ≥95 a11y
 - [ ] All `/app/*` routes redirect to `/log-in` when unauthenticated
 - [ ] `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm test:e2e` all green
