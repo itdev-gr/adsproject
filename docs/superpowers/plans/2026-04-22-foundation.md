@@ -1595,13 +1595,15 @@ git commit -m "feat: add (auth) route group — sign-up, log-in, forgot/reset pa
 
 ---
 
-## Task 12: Build the `middleware.ts` (session refresh + route protection)
+## Task 12: Build the `proxy.ts` (session refresh + route protection)
+
+> **Next 16 deviation:** in Next 16+, `middleware.ts` is deprecated and replaced by `proxy.ts` (export `proxy` instead of `middleware`). Place at `src/proxy.ts` when the project uses a `src/` directory. Source: `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/proxy.md`. Functional behaviour is identical; only the file name and export name change.
 
 **Files:**
 
-- Create: `middleware.ts` (project root)
+- Create: `src/proxy.ts`
 
-- [ ] **Step 1: Write `middleware.ts`**
+- [ ] **Step 1: Write `src/proxy.ts`** (export `proxy` not `middleware`)
 
 ```ts
 import { NextResponse, type NextRequest } from 'next/server'
