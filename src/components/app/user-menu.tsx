@@ -1,12 +1,12 @@
 'use client'
 
+import { useTransition } from 'react'
 import { LogOut, User } from 'lucide-react'
 import Link from 'next/link'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
@@ -22,6 +22,7 @@ export function UserMenu({
   displayName: string | null
   avatarUrl: string | null
 }) {
+  const [isPending, startTransition] = useTransition()
   const initial = (displayName || email).charAt(0).toUpperCase()
   return (
     <DropdownMenu>
@@ -40,17 +41,17 @@ export function UserMenu({
         }
       />
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="truncate">{displayName || email}</DropdownMenuLabel>
+        <div className="text-muted-foreground truncate px-1.5 py-1 text-xs font-medium">
+          {displayName || email}
+        </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem render={<Link href="/app/settings/profile" />}>
           <User className="mr-2 h-4 w-4" /> Profile
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <form action={logOut}>
-          <DropdownMenuItem render={<button type="submit" className="w-full text-left" />}>
-            <LogOut className="mr-2 h-4 w-4" /> Sign out
-          </DropdownMenuItem>
-        </form>
+        <DropdownMenuItem disabled={isPending} onClick={() => startTransition(() => logOut())}>
+          <LogOut className="mr-2 h-4 w-4" /> {isPending ? 'Signing out…' : 'Sign out'}
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )

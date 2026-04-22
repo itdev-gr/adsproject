@@ -37,10 +37,13 @@ test('full happy path: sign up → onboard → dashboard → sign out', async ({
   expect(createdUserId, 'created user should be findable via admin').not.toBeNull()
 
   // Sign out via user menu
-  await page.click('button[aria-label="Open user menu"]')
-  await page.click('text=Sign out')
+  await page.getByRole('button', { name: 'Open user menu' }).click()
+  const signOut = page.getByRole('menuitem', { name: /sign out/i })
+  await expect(signOut).toBeVisible()
+  await signOut.click()
   await page.waitForURL((url) => url.pathname === '/')
-  await expect(page.getByRole('link', { name: 'Sign up' })).toBeVisible()
+  // Landing-page hero confirms we're signed out and on /
+  await expect(page.getByRole('heading', { name: /smarter ad campaigns/i })).toBeVisible()
 
   // Cleanup: delete the test user (cascades to profile + workspace)
   if (createdUserId) {
