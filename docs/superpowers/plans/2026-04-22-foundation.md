@@ -570,64 +570,85 @@ git commit -m "feat: add slug utility with unit tests"
 
 ---
 
-## Task 6: Initialise local Supabase
+## Task 6: Initialise Supabase + link to hosted project
+
+> **Hosted-only mode (no Docker / no local stack).** This deviates from the original plan (which used `supabase start` to run containers locally). Migrations apply to the hosted Supabase project via `supabase db push` (see Task 7). If you ever switch to a containerised local dev workflow, swap `--linked` for `--local` and use `supabase db reset` instead.
 
 **Files:**
 
 - Create: `supabase/config.toml` (auto-written by `supabase init`)
-- Modify: `.env.local` (real Supabase values)
+- Create: `supabase/.gitignore` (auto-written by `supabase init`)
+- Modify: `.env.local` (hosted Supabase project credentials)
 
-- [ ] **Step 1: Verify Supabase CLI installed (Task should fail clearly if not)**
+**Prerequisites:**
 
-```bash
-supabase --version
-```
+- Supabase CLI on PATH (version ≥ 2.90.0). If missing, download directly from the GitHub releases:
+  ```bash
+  mkdir -p ~/bin && cd /tmp && curl -sL "https://github.com/supabase/cli/releases/latest/download/supabase_darwin_arm64.tar.gz" -o supabase.tar.gz && tar -xzf supabase.tar.gz && mv supabase ~/bin/supabase && chmod +x ~/bin/supabase
+  ```
+- A hosted Supabase project created at supabase.com (free plan is fine)
+- Personal access token from `https://supabase.com/dashboard/account/tokens`
+- Database password set when the hosted project was created
 
-If missing: `brew install supabase/tap/supabase`.
-
-- [ ] **Step 2: Initialise**
-
-```bash
-cd /Users/marios/Desktop/Cursor/autoads
-supabase init
-```
-
-Skip the VS Code settings prompt unless you want them.
-
-- [ ] **Step 3: Start the local stack**
+- [ ] **Step 1: Verify CLI**
 
 ```bash
-supabase start
+supabase --version    # expect 2.90.0 or newer
 ```
 
-Expected: Docker pulls images then prints a status block with `API URL`, `anon key`, `service_role key`, `DB URL`. **Copy these values.**
+- [ ] **Step 2: Initialise local config**
 
-- [ ] **Step 4: Fill `.env.local`**
+```bash
+cd /Users/marios/Desktop/Cursor/autoads && supabase init --workdir .
+```
 
-Open `.env.local` and paste the values from `supabase status`:
+Creates `supabase/config.toml` and `supabase/.gitignore`.
+
+- [ ] **Step 3: Link to the hosted project**
+
+```bash
+export SUPABASE_ACCESS_TOKEN=<your-personal-access-token>
+supabase link --project-ref <your-project-ref> -p <your-db-password>
+```
+
+Expected: `Finished supabase link.`
+
+- [ ] **Step 4: Fetch API keys**
+
+```bash
+supabase projects api-keys --project-ref <your-project-ref>
+```
+
+Copy the `anon` and `service_role` values (JWT-style `eyJ...` strings).
+
+- [ ] **Step 5: Write `.env.local`** (gitignored)
 
 ```
-NEXT_PUBLIC_SUPABASE_URL=<API URL from status>
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key from status>
-SUPABASE_SERVICE_ROLE_KEY=<service_role key from status>
-DATABASE_URL=<DB URL from status>
+NEXT_PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key from step 4>
+SUPABASE_SERVICE_ROLE_KEY=<service_role key from step 4>
+DATABASE_URL=postgresql://postgres:<db-password>@db.<your-project-ref>.supabase.co:5432/postgres
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
+SUPABASE_ACCESS_TOKEN=<your-personal-access-token>
+SUPABASE_PROJECT_REF=<your-project-ref>
 ```
 
-- [ ] **Step 5: Verify env validation passes**
+> The last two vars (`SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`) are for CLI tooling (e.g. `supabase db push`) — they are not consumed by the Next.js app but live here so they're available in the shell.
+
+- [ ] **Step 6: Smoke test env validation**
 
 ```bash
-pnpm typecheck
 pnpm dev
 ```
 
-Expected: dev server boots without throwing on env validation. Visit `http://localhost:3000`. Stop the server.
+Visit `http://localhost:3000` — expect HTTP 200, no env-validation errors on boot. Stop dev.
 
-- [ ] **Step 6: Commit (configs only — `.env.local` is gitignored)**
+- [ ] **Step 7: Commit (only `supabase/` — `.env.local` is gitignored)**
 
 ```bash
 git add supabase/
-git commit -m "chore: initialise local Supabase project"
+git commit -m "chore: initialise Supabase + link to hosted project"
 ```
 
 ---
@@ -735,21 +756,23 @@ create policy "users can delete own avatar"
   );
 ```
 
-- [ ] **Step 4: Apply all migrations to local DB**
+- [ ] **Step 4: Apply migrations to the hosted Supabase project**
+
+> **Hosted-only mode.** We push migrations to the linked remote DB instead of resetting a local one.
 
 ```bash
-supabase db reset
+supabase db push --linked
 ```
 
-Expected: prints each migration applied + "Finished supabase db reset on branch ...".
+Expected: each of the three migration files applied in order, finishing with `Finished supabase db push.`
 
-- [ ] **Step 5: Manually verify in Supabase Studio**
+- [ ] **Step 5: Manually verify in the hosted Supabase dashboard**
 
-Open `http://127.0.0.1:54323` (Studio URL from `supabase status`). Confirm:
+Open `https://supabase.com/dashboard/project/<your-project-ref>/editor`. Confirm:
 
-- Tables `profiles` and `workspaces` exist with the right columns
+- Tables `profiles` and `workspaces` exist with the right columns under the `public` schema
 - RLS is enabled on both
-- A bucket named `avatars` exists under Storage
+- A bucket named `avatars` exists under Storage (`/storage/buckets`)
 
 - [ ] **Step 6: Commit**
 
