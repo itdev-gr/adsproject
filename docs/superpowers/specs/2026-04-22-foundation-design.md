@@ -28,11 +28,11 @@ Stand up the bare-bones autoads application: a deployed Next.js app with marketi
 
 ### Architecture
 
-A single Next.js 15 (App Router) application deployed to Vercel, talking to one Supabase project. No microservices, no separate backend, no monorepo. Everything in one repo at `/Users/marios/Desktop/Cursor/autoads/`.
+A single Next.js 16 (App Router) application deployed to Vercel, talking to one Supabase project. No microservices, no separate backend, no monorepo. Everything in one repo at `/Users/marios/Desktop/Cursor/autoads/`.
 
 ```
 ┌─────────────────────────────────────┐         ┌──────────────────────┐
-│  Next.js 15 (App Router)            │ ◄─────► │  Supabase project    │
+│  Next.js 16 (App Router)            │ ◄─────► │  Supabase project    │
 │  - Marketing pages (RSC, static)    │  HTTPS  │  - Postgres          │
 │  - App pages (RSC + Server Actions) │         │  - Auth (email/pwd)  │
 │  - API routes (only when needed)    │         │  - Storage (later)   │

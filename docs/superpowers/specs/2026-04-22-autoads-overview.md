@@ -9,7 +9,7 @@ A multi-tenant SaaS platform that lets users **manage and create paid ad campaig
 
 ## Stack (decided)
 
-- **Frontend / framework:** Next.js 15 (App Router) + React 19 + TypeScript (strict)
+- **Frontend / framework:** Next.js 16 (App Router) + React 19 + TypeScript (strict)
 - **Styling:** Tailwind CSS + shadcn/ui
 - **Backend:** Supabase (Postgres + Auth + Storage + Realtime)
 - **Auth providers:** Email + password only at v1 (no third-party sign-in)

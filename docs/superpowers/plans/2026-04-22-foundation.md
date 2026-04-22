@@ -4,9 +4,9 @@
 
 **Goal:** Stand up the bare-bones autoads Next.js app with marketing site, email-password auth, single-question onboarding, and authenticated app shell with empty-state placeholders for every section. No ad-platform integrations yet.
 
-**Architecture:** Single Next.js 15 (App Router) app deployed to Vercel, talking to one Supabase project (Postgres + Auth + Storage). Server Components by default, Server Actions for mutations, middleware for session refresh + route protection. PostHog + Sentry for observability.
+**Architecture:** Single Next.js 16 (App Router) app deployed to Vercel, talking to one Supabase project (Postgres + Auth + Storage). Server Components by default, Server Actions for mutations, middleware for session refresh + route protection. PostHog + Sentry for observability.
 
-**Tech Stack:** Next.js 15, React 19, TypeScript (strict), Tailwind CSS, shadcn/ui, Supabase (`@supabase/ssr`), Drizzle ORM, React Hook Form + Zod, Tremor, TanStack Table, Resend (later), Stripe (later), Inngest (later), PostHog, Sentry, Vitest, Playwright, pnpm, Husky + lint-staged, Vercel.
+**Tech Stack:** Next.js 16, React 19, TypeScript (strict), Tailwind CSS, shadcn/ui, Supabase (`@supabase/ssr`), Drizzle ORM, React Hook Form + Zod, Tremor, TanStack Table, Resend (later), Stripe (later), Inngest (later), PostHog, Sentry, Vitest, Playwright, pnpm, Husky + lint-staged, Vercel.
 
 **Specs this implements:** `docs/superpowers/specs/2026-04-22-foundation-design.md` and `docs/superpowers/specs/2026-04-22-autoads-overview.md`.
 
@@ -37,9 +37,9 @@ If pnpm is missing: `npm install -g pnpm`.
 cd /Users/marios/Desktop/Cursor/autoads
 pnpm create next-app@latest . \
   --typescript --tailwind --eslint --app --src-dir \
-  --import-alias "@/*" --use-pnpm --turbopack --skip-install
+  --import-alias "@/*" --use-pnpm --turbopack --skip-install --yes
 ```
-When prompted "directory not empty", choose to proceed (only the `.superpowers/` and `docs/` folders exist).
+**Heads up:** `create-next-app` refuses to run when `.superpowers/` exists, even with `--yes` (it's a hard error, not a prompt). Workaround: `mv .superpowers /tmp/__superpowers_tmp && mv docs /tmp/__docs_tmp`, run create-next-app, then `mv /tmp/__superpowers_tmp .superpowers && mv /tmp/__docs_tmp docs`. After this Task 1 commits, future re-runs are unaffected.
 
 - [ ] **Step 3: Install dependencies**
 
