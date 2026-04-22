@@ -1,0 +1,32 @@
+# deps
+node_modules
+.pnpm-store
+
+# next
+.next/
+out/
+
+# env
+.env
+.env.local
+.env.*.local
+
+# misc
+.DS_Store
+*.log
+.vercel
+
+# supabase local
+supabase/.branches
+supabase/.temp
+
+# generated types (regenerated from migrations)
+src/db/types.ts
+
+# tests
+playwright-report
+test-results
+coverage
+
+# brainstorm artefacts
+.superpowers/
