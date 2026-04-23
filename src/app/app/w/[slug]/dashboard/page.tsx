@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button'
 import { StatCard } from '@/components/shared/stat-card'
 import { EmptyState } from '@/components/shared/empty-state'
 
-export default function DashboardPage() {
+export default async function DashboardPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
   return (
     <div className="space-y-6">
       <div>
@@ -21,7 +22,9 @@ export default function DashboardPage() {
         icon={Plug}
         title="No connected accounts yet"
         description="Connect your Google Ads or Meta Ads account to see live performance data here."
-        action={<Button render={<Link href="/app/connections" />}>Connect an account</Button>}
+        action={
+          <Button render={<Link href={`/app/w/${slug}/connections`} />}>Connect an account</Button>
+        }
       />
     </div>
   )

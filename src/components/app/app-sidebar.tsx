@@ -6,21 +6,26 @@ import { LayoutDashboard, Megaphone, Plug, Cog, BarChart3, Settings } from 'luci
 import { cn } from '@/lib/utils'
 import { Logo } from '@/components/shared/logo'
 
-const NAV = [
-  { href: '/app/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/app/campaigns', label: 'Campaigns', icon: Megaphone },
-  { href: '/app/connections', label: 'Connections', icon: Plug },
-  { href: '/app/automation', label: 'Automation', icon: Cog },
-  { href: '/app/reports', label: 'Reports', icon: BarChart3 },
-  { href: '/app/settings/profile', label: 'Settings', icon: Settings },
-] as const
-
-export function AppSidebar({ workspaceName }: { workspaceName: string }) {
+export function AppSidebar({
+  workspaceSlug,
+  workspaceName,
+}: {
+  workspaceSlug: string
+  workspaceName: string
+}) {
   const pathname = usePathname()
+  const NAV = [
+    { href: `/app/w/${workspaceSlug}/dashboard`, label: 'Dashboard', icon: LayoutDashboard },
+    { href: `/app/w/${workspaceSlug}/campaigns`, label: 'Campaigns', icon: Megaphone },
+    { href: `/app/w/${workspaceSlug}/connections`, label: 'Connections', icon: Plug },
+    { href: `/app/w/${workspaceSlug}/automation`, label: 'Automation', icon: Cog },
+    { href: `/app/w/${workspaceSlug}/reports`, label: 'Reports', icon: BarChart3 },
+    { href: `/app/w/${workspaceSlug}/settings/general`, label: 'Settings', icon: Settings },
+  ]
   return (
     <aside className="bg-card flex h-full w-60 shrink-0 flex-col border-r">
       <div className="px-5 py-4">
-        <Logo href="/app/dashboard" />
+        <Logo href={`/app/w/${workspaceSlug}/dashboard`} />
         <p className="text-muted-foreground mt-1 text-xs">{workspaceName}</p>
       </div>
       <nav className="flex-1 space-y-1 px-3">
