@@ -406,6 +406,15 @@ create policy workspaces_delete_owner on public.workspaces for delete
   ));
 
 -- workspaces_insert_own from Foundation stays (owner_id = auth.uid())
+
+-- Hardening: enforce "exactly one owner per workspace" at DB layer.
+-- Without this, two concurrent ownership-transfer transactions can both succeed
+-- (each demotes the other's prior owner), leaving the table with two 'owner' rows.
+-- This partial unique index makes the second concurrent transfer fail cleanly with
+-- a unique-violation, which the action layer can surface as "try again".
+create unique index workspace_members_one_owner_idx
+  on public.workspace_members(workspace_id)
+  where role = 'owner';
 ```
 
 - [ ] **Step 2: Push**
