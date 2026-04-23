@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { env } from '@/lib/env'
+import { acceptInvitation } from '@/lib/actions/workspaces'
 
 const signUpSchema = z.object({
   email: z.string().email(),
@@ -17,8 +18,9 @@ const signUpSchema = z.object({
 
 export async function signUp(formData: FormData) {
   const parsed = signUpSchema.safeParse(Object.fromEntries(formData))
-  if (!parsed.success)
+  if (!parsed.success) {
     return { error: 'Please enter a valid email and password (8+ chars, letters + digits).' }
+  }
 
   const supabase = await createClient()
   const { error } = await supabase.auth.signUp({
@@ -27,9 +29,17 @@ export async function signUp(formData: FormData) {
   })
   if (error) return { error: error.message }
 
-  // Auto-login (no email verification per design).
   const { error: signInError } = await supabase.auth.signInWithPassword(parsed.data)
   if (signInError) return { error: signInError.message }
+
+  const inviteToken = (formData.get('invite_token') as string | null)?.trim() || null
+  if (inviteToken) {
+    const result = await acceptInvitation(inviteToken)
+    if ('slug' in result && result.slug) {
+      redirect(`/app/w/${result.slug}/dashboard`)
+    }
+    // If acceptance failed (e.g. wrong email), fall through to onboarding so the user has somewhere to land.
+  }
 
   redirect('/onboarding')
 }
@@ -43,6 +53,14 @@ export async function logIn(formData: FormData, redirectTo = '/app/dashboard') {
   const supabase = await createClient()
   const { error } = await supabase.auth.signInWithPassword(parsed.data)
   if (error) return { error: 'Invalid email or password.' }
+
+  const inviteToken = (formData.get('invite_token') as string | null)?.trim() || null
+  if (inviteToken) {
+    const result = await acceptInvitation(inviteToken)
+    if ('slug' in result && result.slug) {
+      redirect(`/app/w/${result.slug}/dashboard`)
+    }
+  }
 
   redirect(redirectTo)
 }

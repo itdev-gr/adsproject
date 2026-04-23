@@ -5,7 +5,14 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { signUp } from '@/lib/actions/auth'
 
-export default function SignUpPage() {
+export default async function SignUpPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ invite_token?: string; email?: string }>
+}) {
+  const sp = await searchParams
+  const inviteToken = sp.invite_token ?? ''
+  const prefilledEmail = sp.email ?? ''
   const action = async (formData: FormData) => {
     'use server'
     await signUp(formData)
@@ -27,9 +34,17 @@ export default function SignUpPage() {
       }
     >
       <form action={action} className="space-y-4">
+        {inviteToken && <input type="hidden" name="invite_token" value={inviteToken} />}
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" name="email" type="email" autoComplete="email" required />
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            defaultValue={prefilledEmail}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="password">Password</Label>

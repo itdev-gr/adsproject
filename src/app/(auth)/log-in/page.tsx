@@ -8,9 +8,9 @@ import { logIn } from '@/lib/actions/auth'
 export default async function LogInPage({
   searchParams,
 }: {
-  searchParams: Promise<{ redirect?: string }>
+  searchParams: Promise<{ redirect?: string; invite_token?: string }>
 }) {
-  const { redirect } = await searchParams
+  const { redirect, invite_token: inviteToken } = await searchParams
   const action = async (formData: FormData) => {
     'use server'
     await logIn(formData, redirect ?? '/app/dashboard')
@@ -31,6 +31,7 @@ export default async function LogInPage({
       }
     >
       <form action={action} className="space-y-4">
+        {inviteToken && <input type="hidden" name="invite_token" value={inviteToken} />}
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input id="email" name="email" type="email" autoComplete="email" required />
