@@ -2,14 +2,13 @@ import Link from 'next/link'
 
 const TABS = [
   { href: '/app/settings/profile', label: 'Profile' },
-  { href: '/app/settings/workspace', label: 'Workspace' },
   { href: '/app/settings/account', label: 'Account' },
 ] as const
 
-export default function SettingsLayout({ children }: { children: React.ReactNode }) {
+export default function PersonalSettingsLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Settings</h1>
+      <h1 className="text-2xl font-semibold">Personal settings</h1>
       <div className="flex gap-1 border-b">
         {TABS.map((t) => (
           <Link
