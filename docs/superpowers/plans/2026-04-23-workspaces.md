@@ -581,6 +581,12 @@ function makeUrlSafeToken(token: string) {
   return token.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '')
 }
 
+function fromUrlSafeToken(urlSafe: string) {
+  // Reverse of makeUrlSafeToken — produces the canonical base64 form stored in DB.
+  // 24-byte payloads produce 32-char base64 with no `=` padding, so we don't re-add any.
+  return urlSafe.replace(/-/g, '+').replace(/_/g, '/')
+}
+
 // ────────────── createWorkspace ──────────────
 
 const createSchema = z.object({ name: z.string().min(1).max(60) })
@@ -691,11 +697,13 @@ export async function acceptInvitation(token: string) {
   const { data: userData } = await supabase.auth.getUser()
   if (!userData.user) return { error: 'Not authenticated.' }
 
-  // Service-role lookup so we can read invites for any workspace
+  // Service-role lookup so we can read invites for any workspace.
+  // The token comes in URL-safe form; reverse to the canonical base64 we store.
+  const dbToken = fromUrlSafeToken(token)
   const { data: invite, error: lookupErr } = await admin()
     .from('invitations')
     .select('id, workspace_id, email, role, expires_at, accepted_at, workspaces(slug, name)')
-    .eq('token', token)
+    .eq('token', dbToken)
     .maybeSingle()
   if (lookupErr || !invite) return { error: 'Invitation not found.' }
   if (invite.accepted_at) return { error: 'Invitation already accepted.' }
