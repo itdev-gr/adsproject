@@ -17,15 +17,19 @@
 ## Environment notes (every implementer subagent must read this)
 
 **Node:** Always prefix bash with:
+
 ```bash
 export PATH="/Users/marios/.nvm/versions/node/v20.20.2/bin:/Users/marios/bin:$PATH" && cd /Users/marios/Desktop/Cursor/autoads && <cmd>
 ```
+
 Verify `node --version` = `v20.20.2`. STOP if not.
 
 **Supabase env:** For migration pushes and type generation, source `.env.local`:
+
 ```bash
 set -a && source /Users/marios/Desktop/Cursor/autoads/.env.local && set +a
 ```
+
 The CLI is at `/Users/marios/bin/supabase` (v2.90.0+). Project linked to `utytknefnlgjrhguazvn`.
 
 **Type regen after migrations:** After any schema change, run `pnpm db:types` to regenerate `src/db/types.ts`. Commit the regenerated file.
@@ -35,9 +39,11 @@ The CLI is at `/Users/marios/bin/supabase` (v2.90.0+). Project linked to `utytkn
 **shadcn base-nova:** This codebase uses `base-nova` style with `@base-ui/react`, NOT classic `@radix-ui`. Use `<Component render={<OtherComponent />}>` instead of `asChild`. `DropdownMenuLabel` requires being inside `<DropdownMenuGroup>` — prefer plain `<div>` for static labels.
 
 **Quality gates after each task:**
+
 ```bash
 pnpm format && pnpm lint && pnpm typecheck && pnpm build
 ```
+
 All must exit 0. (Vitest was removed during simplification; only Playwright E2E remains.)
 
 **Commit + push pattern:** Each task ends with one focused commit. Push after every task — Vercel auto-deploys from `main`, so verify the deploy succeeds before moving on.
@@ -114,6 +120,7 @@ docs/superpowers/specs/2026-04-22-foundation-design.md   (MODIFIED — Task 11: 
 ```
 
 Files to **delete** (Foundation paths replaced by `/app/w/[slug]/...` versions):
+
 - `src/app/app/dashboard/`, `src/app/app/campaigns/`, `src/app/app/connections/`, `src/app/app/automation/`, `src/app/app/reports/` — directories deleted as part of Task 10
 - `src/app/app/settings/workspace/` — directory deleted as part of Task 11
 
@@ -122,11 +129,13 @@ Files to **delete** (Foundation paths replaced by `/app/w/[slug]/...` versions):
 ## Task 1: Migration 0005 — `workspace_members` table + triggers + RLS
 
 **Files:**
+
 - Create: `supabase/migrations/0005_workspace_members.sql`
 
 - [ ] **Step 1: Write the migration**
 
 `supabase/migrations/0005_workspace_members.sql`:
+
 ```sql
 -- Many-to-many users ↔ workspaces with role
 create table public.workspace_members (
@@ -228,6 +237,7 @@ create policy members_update_admin on public.workspace_members for update
 ```bash
 export PATH="/Users/marios/.nvm/versions/node/v20.20.2/bin:/Users/marios/bin:$PATH" && cd /Users/marios/Desktop/Cursor/autoads && set -a && source .env.local && set +a && yes | supabase db push --linked
 ```
+
 Expected: `Applying migration 0005_workspace_members.sql...` then `Finished supabase db push.`
 
 - [ ] **Step 3: Verify backfill**
@@ -235,12 +245,15 @@ Expected: `Applying migration 0005_workspace_members.sql...` then `Finished supa
 ```bash
 export PATH="/Users/marios/.nvm/versions/node/v20.20.2/bin:/Users/marios/bin:$PATH" && cd /Users/marios/Desktop/Cursor/autoads && set -a && source .env.local && set +a && supabase migration list --linked | tail -8
 ```
+
 Expected: `0005` shows in both Local and Remote.
 
 If you have `psql` available:
+
 ```bash
 PGPASSWORD=$(echo "$DATABASE_URL" | sed -E 's|.*postgres:([^@]*)@.*|\1|') psql "${DATABASE_URL}" -c "select count(*) as workspace_count, count(distinct workspace_id) as members_workspace_count from public.workspaces full outer join public.workspace_members on public.workspaces.id = workspace_members.workspace_id;"
 ```
+
 Otherwise just trust the migration ran cleanly (the SQL is idempotent on conflict).
 
 - [ ] **Step 4: Regenerate types**
@@ -248,6 +261,7 @@ Otherwise just trust the migration ran cleanly (the SQL is idempotent on conflic
 ```bash
 export PATH="/Users/marios/.nvm/versions/node/v20.20.2/bin:/Users/marios/bin:$PATH" && cd /Users/marios/Desktop/Cursor/autoads && set -a && source .env.local && set +a && pnpm db:types && wc -l src/db/types.ts
 ```
+
 Expected: file size grows to include `workspace_members` table type.
 
 - [ ] **Step 5: Quality gates**
@@ -267,11 +281,13 @@ git add -A && git commit -m "feat(db): add workspace_members table with role + t
 ## Task 2: Migration 0006 — `invitations` table + email-normalisation trigger + RLS
 
 **Files:**
+
 - Create: `supabase/migrations/0006_invitations.sql`
 
 - [ ] **Step 1: Write the migration**
 
 `supabase/migrations/0006_invitations.sql`:
+
 ```sql
 create table public.invitations (
   id           uuid primary key default gen_random_uuid(),
@@ -342,6 +358,7 @@ create policy invitations_delete_admin_or_invitee on public.invitations for dele
 ```bash
 export PATH="/Users/marios/.nvm/versions/node/v20.20.2/bin:/Users/marios/bin:$PATH" && cd /Users/marios/Desktop/Cursor/autoads && set -a && source .env.local && set +a && yes | supabase db push --linked
 ```
+
 Expected: `Applying migration 0006_invitations.sql...` then `Finished supabase db push.`
 
 - [ ] **Step 3: Regenerate types + commit**
@@ -355,11 +372,13 @@ export PATH="/Users/marios/.nvm/versions/node/v20.20.2/bin:/Users/marios/bin:$PA
 ## Task 3: Migration 0007 — rewrite `workspaces` RLS to use member relationships
 
 **Files:**
+
 - Create: `supabase/migrations/0007_workspaces_rls_rewrite.sql`
 
 - [ ] **Step 1: Write the migration**
 
 `supabase/migrations/0007_workspaces_rls_rewrite.sql`:
+
 ```sql
 -- Drop Foundation's owner-only policies; insert policy stays
 drop policy if exists workspaces_select_own on public.workspaces;
@@ -406,6 +425,7 @@ export PATH="/Users/marios/.nvm/versions/node/v20.20.2/bin:/Users/marios/bin:$PA
 ## Task 4: Add shadcn `select` and `table` primitives
 
 **Files:**
+
 - Create: `src/components/ui/select.tsx`
 - Create: `src/components/ui/table.tsx`
 
@@ -414,6 +434,7 @@ export PATH="/Users/marios/.nvm/versions/node/v20.20.2/bin:/Users/marios/bin:$PA
 ```bash
 export PATH="/Users/marios/.nvm/versions/node/v20.20.2/bin:/Users/marios/bin:$PATH" && cd /Users/marios/Desktop/Cursor/autoads && pnpm dlx shadcn@latest add select table --yes
 ```
+
 Expected: both files created in `src/components/ui/`.
 
 - [ ] **Step 2: Verify quality gates**
@@ -433,11 +454,13 @@ git add -A && git commit -m "feat(ui): add shadcn select + table primitives" && 
 ## Task 5: Membership helper — `src/lib/auth/membership.ts`
 
 **Files:**
+
 - Create: `src/lib/auth/membership.ts`
 
 - [ ] **Step 1: Write the helper**
 
 `src/lib/auth/membership.ts`:
+
 ```ts
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
@@ -486,10 +509,7 @@ export async function requireMember(slug: string): Promise<Membership> {
 }
 
 /** Throws redirect to /app/w/<slug>/dashboard if role not in `allowed`. */
-export async function requireRole(
-  slug: string,
-  allowed: WorkspaceRole[],
-): Promise<Membership> {
+export async function requireRole(slug: string, allowed: WorkspaceRole[]): Promise<Membership> {
   const m = await requireMember(slug)
   if (!allowed.includes(m.role)) redirect(`/app/w/${slug}/dashboard`)
   return m
@@ -513,11 +533,13 @@ git add -A && git commit -m "feat(auth): add membership helper (getMembership + 
 ## Task 6: Workspace Server Actions — `src/lib/actions/workspaces.ts`
 
 **Files:**
+
 - Create: `src/lib/actions/workspaces.ts`
 
 - [ ] **Step 1: Write all 9 actions**
 
 `src/lib/actions/workspaces.ts`:
+
 ```ts
 'use server'
 
@@ -575,7 +597,6 @@ export async function createWorkspace(formData: FormData) {
     .from('workspaces')
     .insert({ name: parsed.data.name, slug, owner_id: userData.user.id })
   if (error) return { error: error.message }
-
   ;(await cookies()).set(RECENT_COOKIE, slug, COOKIE_OPTS)
   redirect(`/app/w/${slug}/dashboard`)
 }
@@ -679,21 +700,21 @@ export async function acceptInvitation(token: string) {
   }
 
   // Insert membership via service role (no client INSERT policy)
-  const { error: memberErr } = await admin()
-    .from('workspace_members')
-    .insert({
-      workspace_id: invite.workspace_id,
-      user_id: userData.user.id,
-      role: invite.role,
-    })
+  const { error: memberErr } = await admin().from('workspace_members').insert({
+    workspace_id: invite.workspace_id,
+    user_id: userData.user.id,
+    role: invite.role,
+  })
   if (memberErr) return { error: memberErr.message }
 
   // Mark accepted
-  await admin().from('invitations').update({ accepted_at: new Date().toISOString() }).eq('id', invite.id)
+  await admin()
+    .from('invitations')
+    .update({ accepted_at: new Date().toISOString() })
+    .eq('id', invite.id)
 
   const ws = Array.isArray(invite.workspaces) ? invite.workspaces[0] : invite.workspaces
   if (!ws) return { error: 'Workspace not found.' }
-
   ;(await cookies()).set(RECENT_COOKIE, ws.slug, COOKIE_OPTS)
   return { ok: true, slug: ws.slug }
 }
@@ -713,7 +734,10 @@ export async function declineInvitation(invitationId: string) {
 
 export async function removeMember(slug: string, userId: string) {
   const m = await requireRole(slug, ['owner', 'admin'])
-  if (userId === (await (await createClient()).auth.getUser()).data.user!.id && m.role === 'owner') {
+  if (
+    userId === (await (await createClient()).auth.getUser()).data.user!.id &&
+    m.role === 'owner'
+  ) {
     return { error: 'Owners cannot remove themselves. Transfer ownership first.' }
   }
   const supabase = await createClient()
@@ -731,7 +755,8 @@ export async function removeMember(slug: string, userId: string) {
 
 export async function leaveWorkspace(slug: string) {
   const m = await requireMember(slug)
-  if (m.role === 'owner') return { error: 'Owners cannot leave. Transfer ownership or delete the workspace.' }
+  if (m.role === 'owner')
+    return { error: 'Owners cannot leave. Transfer ownership or delete the workspace.' }
 
   const supabase = await createClient()
   const { data: userData } = await supabase.auth.getUser()
@@ -813,6 +838,7 @@ git add -A && git commit -m "feat(actions): add 9 workspace Server Actions (crea
 ## Task 7: Edit existing Foundation actions
 
 **Files:**
+
 - Modify: `src/lib/actions/account.ts` (last-owner protection)
 - Modify: `src/lib/actions/workspace.ts` (scope by slug, requireRole)
 - Modify: `src/lib/actions/auth.ts` (handle invite_token)
@@ -907,18 +933,24 @@ export async function updateWorkspace(slug: string, formData: FormData) {
 Read the current file. Modify `signUp` and `logIn` to accept an optional `invite_token` parameter and call `acceptInvitation` after auth before redirecting:
 
 Add at the top:
+
 ```ts
 import { acceptInvitation } from '@/lib/actions/workspaces'
 ```
 
 Modify `signUp`:
+
 ```ts
 export async function signUp(formData: FormData) {
   const parsed = signUpSchema.safeParse(Object.fromEntries(formData))
-  if (!parsed.success) return { error: 'Please enter a valid email and password (8+ chars, letters + digits).' }
+  if (!parsed.success)
+    return { error: 'Please enter a valid email and password (8+ chars, letters + digits).' }
 
   const supabase = await createClient()
-  const { error } = await supabase.auth.signUp({ email: parsed.data.email, password: parsed.data.password })
+  const { error } = await supabase.auth.signUp({
+    email: parsed.data.email,
+    password: parsed.data.password,
+  })
   if (error) return { error: error.message }
 
   const { error: signInError } = await supabase.auth.signInWithPassword(parsed.data)
@@ -938,6 +970,7 @@ export async function signUp(formData: FormData) {
 ```
 
 Modify `logIn` similarly:
+
 ```ts
 export async function logIn(formData: FormData, redirectTo = '/app/dashboard') {
   const parsed = logInSchema.safeParse(Object.fromEntries(formData))
@@ -1000,6 +1033,7 @@ git add -A && git commit -m "feat(actions): scope updateWorkspace by slug, last-
 ## Task 8: Update proxy — membership check + cookie write + back-compat redirects
 
 **Files:**
+
 - Modify: `src/proxy.ts`
 
 - [ ] **Step 1: Read the current proxy**
@@ -1011,6 +1045,7 @@ cat src/proxy.ts
 - [ ] **Step 2: Replace with the updated version**
 
 `src/proxy.ts`:
+
 ```ts
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
@@ -1147,6 +1182,7 @@ echo "Anon /app/w/foo/dashboard: $(/usr/bin/curl -s -o /dev/null -w 'code=%{http
 kill $DEV_PID 2>/dev/null
 wait $DEV_PID 2>/dev/null
 ```
+
 Both should redirect to `/log-in?redirect=...`.
 
 - [ ] **Step 5: Commit + push**
@@ -1160,6 +1196,7 @@ git add -A && git commit -m "feat(proxy): membership check, recent cookie, back-
 ## Task 9: Personal app layout — `src/app/app/layout.tsx`
 
 **Files:**
+
 - Modify: `src/app/app/layout.tsx` (no longer fetches workspace; delegates workspace chrome to `[slug]/layout`)
 - Modify: `src/app/app/page.tsx` (new redirect logic to `/app/w/<recent>/dashboard`)
 
@@ -1200,7 +1237,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="flex h-14 items-center justify-between border-b bg-card px-6">
+      <header className="bg-card flex h-14 items-center justify-between border-b px-6">
         <WorkspaceSwitcher workspaces={workspaces} activeSlug={null} />
         <div className="flex items-center gap-2">
           <ThemeToggle />
@@ -1211,7 +1248,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           />
         </div>
       </header>
-      <main className="flex-1 overflow-auto bg-muted/20 p-8">{children}</main>
+      <main className="bg-muted/20 flex-1 overflow-auto p-8">{children}</main>
     </div>
   )
 }
@@ -1253,6 +1290,7 @@ export default async function AppIndex() {
 - [ ] **Step 4: Stub `src/components/app/workspace-switcher.tsx`** (so the build compiles before Task 12)
 
 `src/components/app/workspace-switcher.tsx`:
+
 ```tsx
 'use client'
 
@@ -1270,11 +1308,7 @@ export function WorkspaceSwitcher({
   activeSlug: string | null
 }) {
   const active = activeSlug ? workspaces.find((w) => w.slug === activeSlug) : null
-  return (
-    <div className="text-sm font-medium">
-      {active?.name ?? 'Personal'}
-    </div>
-  )
+  return <div className="text-sm font-medium">{active?.name ?? 'Personal'}</div>
 }
 ```
 
@@ -1301,6 +1335,7 @@ git add -A && git commit -m "feat(app): personal app layout (header only) + new 
 ## Task 10: Workspace `[slug]` layout + move 5 protected pages
 
 **Files:**
+
 - Create: `src/app/app/w/[slug]/layout.tsx`
 - Create: `src/app/app/w/[slug]/page.tsx` (redirect to /dashboard)
 - Move: `src/app/app/dashboard/` → `src/app/app/w/[slug]/dashboard/`
@@ -1327,6 +1362,7 @@ The dashboard page has a `Link href="/app/connections"`. Update it to use the sl
 For the dashboard, since it's a server component receiving `params`, the simplest pattern:
 
 `src/app/app/w/[slug]/dashboard/page.tsx`:
+
 ```tsx
 import { Plug } from 'lucide-react'
 import Link from 'next/link'
@@ -1417,7 +1453,7 @@ export default async function WorkspaceLayout({
     <div className="flex h-dvh">
       <AppSidebar workspaceSlug={slug} workspaceName={m.workspaceName} />
       <div className="flex flex-1 flex-col">
-        <header className="flex h-14 items-center justify-between border-b bg-card px-6">
+        <header className="bg-card flex h-14 items-center justify-between border-b px-6">
           <WorkspaceSwitcher workspaces={workspaces} activeSlug={slug} />
           <div className="flex items-center gap-2">
             <ThemeToggle />
@@ -1428,7 +1464,7 @@ export default async function WorkspaceLayout({
             />
           </div>
         </header>
-        <main className="flex-1 overflow-auto bg-muted/20 p-8">{children}</main>
+        <main className="bg-muted/20 flex-1 overflow-auto p-8">{children}</main>
       </div>
     </div>
   )
@@ -1465,7 +1501,7 @@ export function AppSidebar({
     { href: `/app/w/${workspaceSlug}/settings/general`, label: 'Settings', icon: Settings },
   ]
   return (
-    <aside className="flex h-full w-60 shrink-0 flex-col border-r bg-card">
+    <aside className="bg-card flex h-full w-60 shrink-0 flex-col border-r">
       <div className="px-5 py-4">
         <Logo href={`/app/w/${workspaceSlug}/dashboard`} />
         <p className="text-muted-foreground mt-1 text-xs">{workspaceName}</p>
@@ -1514,6 +1550,7 @@ git add -A && git commit -m "feat(app): introduce /app/w/[slug]/ scope; move 5 p
 ## Task 11: Move workspace settings; add settings layout for `[slug]/settings/*`
 
 **Files:**
+
 - Move: `src/app/app/settings/workspace/page.tsx` → `src/app/app/w/[slug]/settings/general/page.tsx` (rename folder + file content edit)
 - Create: `src/app/app/w/[slug]/settings/layout.tsx`
 - Delete: `src/app/app/settings/workspace/` (after move)
@@ -1528,6 +1565,7 @@ git mv src/app/app/settings/workspace src/app/app/w/\[slug\]/settings/general
 - [ ] **Step 2: Update the moved page to use slug**
 
 `src/app/app/w/[slug]/settings/general/page.tsx`:
+
 ```tsx
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -1566,7 +1604,13 @@ export default async function WorkspaceGeneralSettingsPage({
         <form action={action} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Workspace name</Label>
-            <Input id="name" name="name" defaultValue={workspace?.name ?? ''} maxLength={60} required />
+            <Input
+              id="name"
+              name="name"
+              defaultValue={workspace?.name ?? ''}
+              maxLength={60}
+              required
+            />
           </div>
           <div className="space-y-2">
             <Label>Slug</Label>
@@ -1586,6 +1630,7 @@ export default async function WorkspaceGeneralSettingsPage({
 - [ ] **Step 3: Create the workspace-settings layout (sub-nav)**
 
 `src/app/app/w/[slug]/settings/layout.tsx`:
+
 ```tsx
 import Link from 'next/link'
 import { requireMember } from '@/lib/auth/membership'
@@ -1603,7 +1648,9 @@ export default async function WorkspaceSettingsLayout({
   const tabs = [
     { href: `/app/w/${slug}/settings/general`, label: 'General' },
     { href: `/app/w/${slug}/settings/members`, label: 'Members' },
-    ...(m.role === 'owner' ? [{ href: `/app/w/${slug}/settings/danger`, label: 'Danger zone' }] : []),
+    ...(m.role === 'owner'
+      ? [{ href: `/app/w/${slug}/settings/danger`, label: 'Danger zone' }]
+      : []),
   ]
 
   return (
@@ -1614,7 +1661,7 @@ export default async function WorkspaceSettingsLayout({
           <Link
             key={t.href}
             href={t.href}
-            className="border-b-2 border-transparent px-3 py-2 text-sm text-muted-foreground hover:border-muted-foreground/30 hover:text-foreground"
+            className="text-muted-foreground hover:border-muted-foreground/30 hover:text-foreground border-b-2 border-transparent px-3 py-2 text-sm"
           >
             {t.label}
           </Link>
@@ -1647,7 +1694,7 @@ export default function PersonalSettingsLayout({ children }: { children: React.R
           <Link
             key={t.href}
             href={t.href}
-            className="border-b-2 border-transparent px-3 py-2 text-sm text-muted-foreground hover:border-muted-foreground/30 hover:text-foreground"
+            className="text-muted-foreground hover:border-muted-foreground/30 hover:text-foreground border-b-2 border-transparent px-3 py-2 text-sm"
           >
             {t.label}
           </Link>
@@ -1680,12 +1727,14 @@ git add -A && git commit -m "feat(settings): move workspace settings to /app/w/[
 ## Task 12: WorkspaceSwitcher + CreateWorkspaceDialog
 
 **Files:**
+
 - Modify: `src/components/app/workspace-switcher.tsx` (replace Task 9 stub with real switcher)
 - Create: `src/components/app/create-workspace-dialog.tsx`
 
 - [ ] **Step 1: Replace `WorkspaceSwitcher` stub**
 
 `src/components/app/workspace-switcher.tsx`:
+
 ```tsx
 'use client'
 
@@ -1746,7 +1795,7 @@ export function WorkspaceSwitcher({
               className="justify-between"
             >
               <span className="truncate">{w.name}</span>
-              {w.slug === activeSlug ? <Check className="h-4 w-4 text-primary" /> : null}
+              {w.slug === activeSlug ? <Check className="text-primary h-4 w-4" /> : null}
             </DropdownMenuItem>
           ))}
           <DropdownMenuSeparator />
@@ -1765,6 +1814,7 @@ export function WorkspaceSwitcher({
 - [ ] **Step 2: Create `CreateWorkspaceDialog`**
 
 `src/components/app/create-workspace-dialog.tsx`:
+
 ```tsx
 'use client'
 
@@ -1838,6 +1888,7 @@ git add -A && git commit -m "feat(app): real WorkspaceSwitcher + CreateWorkspace
 ## Task 13: Members table — `WorkspaceMembersTable` + `RoleSelect` + `RemoveMemberButton`
 
 **Files:**
+
 - Create: `src/components/app/workspace-members-table.tsx`
 - Create: `src/components/app/role-select.tsx`
 - Create: `src/components/app/remove-member-button.tsx`
@@ -1846,6 +1897,7 @@ git add -A && git commit -m "feat(app): real WorkspaceSwitcher + CreateWorkspace
 - [ ] **Step 1: Create the `RoleSelect` client component**
 
 `src/components/app/role-select.tsx`:
+
 ```tsx
 'use client'
 
@@ -1919,6 +1971,7 @@ export function RoleSelect({
 - [ ] **Step 2: Create the `RemoveMemberButton` client component**
 
 `src/components/app/remove-member-button.tsx`:
+
 ```tsx
 'use client'
 
@@ -1956,6 +2009,7 @@ export function RemoveMemberButton({
 - [ ] **Step 3: Create `WorkspaceMembersTable` (server component, takes pre-fetched data)**
 
 `src/components/app/workspace-members-table.tsx`:
+
 ```tsx
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -2017,7 +2071,9 @@ export function WorkspaceMembersTable({
                       {m.displayName || m.email}
                       {isMe && <span className="text-muted-foreground ml-2 text-xs">(you)</span>}
                     </div>
-                    {m.displayName && <div className="text-muted-foreground text-xs">{m.email}</div>}
+                    {m.displayName && (
+                      <div className="text-muted-foreground text-xs">{m.email}</div>
+                    )}
                   </div>
                 </div>
               </TableCell>
@@ -2052,17 +2108,14 @@ export function WorkspaceMembersTable({
 - [ ] **Step 4: Create the members page** (this fetches data + composes — also ties in Task 14's invite section, so we'll write the page partially here and complete it in Task 14)
 
 `src/app/app/w/[slug]/settings/members/page.tsx`:
+
 ```tsx
 import { createClient } from '@/lib/supabase/server'
 import { requireMember } from '@/lib/auth/membership'
 import { WorkspaceMembersTable, type MemberRow } from '@/components/app/workspace-members-table'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-export default async function MembersPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>
-}) {
+export default async function MembersPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const m = await requireMember(slug)
 
@@ -2142,6 +2195,7 @@ git add -A && git commit -m "feat(members): add WorkspaceMembersTable + RoleSele
 ## Task 14: Invite section + pending invitations list (in members page)
 
 **Files:**
+
 - Create: `src/components/app/invite-section.tsx`
 - Create: `src/components/app/pending-invitations-list.tsx`
 - Modify: `src/app/app/w/[slug]/settings/members/page.tsx` (add the two new components below the members table)
@@ -2149,6 +2203,7 @@ git add -A && git commit -m "feat(members): add WorkspaceMembersTable + RoleSele
 - [ ] **Step 1: Create `InviteSection`**
 
 `src/components/app/invite-section.tsx`:
+
 ```tsx
 'use client'
 
@@ -2234,6 +2289,7 @@ export function InviteSection({ slug }: { slug: string }) {
 - [ ] **Step 2: Create `PendingInvitationsList`**
 
 `src/components/app/pending-invitations-list.tsx`:
+
 ```tsx
 'use client'
 
@@ -2306,7 +2362,10 @@ Add to `src/app/app/w/[slug]/settings/members/page.tsx`, after the existing `Wor
 
 ```tsx
 import { InviteSection } from '@/components/app/invite-section'
-import { PendingInvitationsList, type PendingInvitation } from '@/components/app/pending-invitations-list'
+import {
+  PendingInvitationsList,
+  type PendingInvitation,
+} from '@/components/app/pending-invitations-list'
 
 // ... inside the component, after fetching members:
 const canManage = m.role === 'owner' || m.role === 'admin'
@@ -2325,8 +2384,10 @@ const pending: PendingInvitation[] = (pendingRows ?? []).map((r) => ({
 }))
 
 // ... in the JSX, after the members Card:
-{canManage && <InviteSection slug={slug} />}
-<PendingInvitationsList slug={slug} invitations={pending} canRevoke={canManage} />
+{
+  canManage && <InviteSection slug={slug} />
+}
+;<PendingInvitationsList slug={slug} invitations={pending} canRevoke={canManage} />
 ```
 
 - [ ] **Step 4: Quality gates + commit**
@@ -2341,6 +2402,7 @@ git add -A && git commit -m "feat(members): add InviteSection + PendingInvitatio
 ## Task 15: Danger zone — `TransferOwnershipForm` + `DeleteWorkspaceForm`
 
 **Files:**
+
 - Create: `src/components/app/transfer-ownership-form.tsx`
 - Create: `src/components/app/delete-workspace-form.tsx`
 - Create: `src/app/app/w/[slug]/settings/danger/page.tsx`
@@ -2348,6 +2410,7 @@ git add -A && git commit -m "feat(members): add InviteSection + PendingInvitatio
 - [ ] **Step 1: Create `TransferOwnershipForm`**
 
 `src/components/app/transfer-ownership-form.tsx`:
+
 ```tsx
 'use client'
 
@@ -2382,7 +2445,11 @@ export function TransferOwnershipForm({
     })
   }
   if (candidates.length === 0) {
-    return <p className="text-muted-foreground text-sm">Invite a member before transferring ownership.</p>
+    return (
+      <p className="text-muted-foreground text-sm">
+        Invite a member before transferring ownership.
+      </p>
+    )
   }
   return (
     <div className="flex items-center gap-2">
@@ -2409,6 +2476,7 @@ export function TransferOwnershipForm({
 - [ ] **Step 2: Create `DeleteWorkspaceForm`**
 
 `src/components/app/delete-workspace-form.tsx`:
+
 ```tsx
 'use client'
 
@@ -2459,6 +2527,7 @@ export function DeleteWorkspaceForm({
 - [ ] **Step 3: Create the danger zone page**
 
 `src/app/app/w/[slug]/settings/danger/page.tsx`:
+
 ```tsx
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { createClient } from '@/lib/supabase/server'
@@ -2466,11 +2535,7 @@ import { requireRole } from '@/lib/auth/membership'
 import { TransferOwnershipForm } from '@/components/app/transfer-ownership-form'
 import { DeleteWorkspaceForm } from '@/components/app/delete-workspace-form'
 
-export default async function DangerZonePage({
-  params,
-}: {
-  params: Promise<{ slug: string }>
-}) {
+export default async function DangerZonePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const m = await requireRole(slug, ['owner'])
 
@@ -2503,7 +2568,8 @@ export default async function DangerZonePage({
         <CardHeader>
           <CardTitle>Transfer ownership</CardTitle>
           <CardDescription>
-            After transfer, you will become an admin. The new owner gains all owner-only permissions.
+            After transfer, you will become an admin. The new owner gains all owner-only
+            permissions.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -2515,7 +2581,8 @@ export default async function DangerZonePage({
         <CardHeader>
           <CardTitle className="text-destructive">Delete workspace</CardTitle>
           <CardDescription>
-            Permanently delete &quot;{m.workspaceName}&quot; and all its data. This cannot be undone.
+            Permanently delete &quot;{m.workspaceName}&quot; and all its data. This cannot be
+            undone.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -2539,12 +2606,14 @@ git add -A && git commit -m "feat(danger): add danger zone page with transfer + 
 ## Task 16: Public `/invite/[token]` landing + `InviteAcceptCard`
 
 **Files:**
+
 - Create: `src/components/app/invite-accept-card.tsx`
 - Create: `src/app/invite/[token]/page.tsx`
 
 - [ ] **Step 1: Create `InviteAcceptCard`**
 
 `src/components/app/invite-accept-card.tsx`:
+
 ```tsx
 'use client'
 
@@ -2696,7 +2765,9 @@ function WrongAccountBranch({
         <strong>{inviteEmail}</strong>. You are signed in as <strong>{callerEmail}</strong>.
       </p>
       <form action={logOut}>
-        <Button type="submit" variant="outline">Sign out and switch accounts</Button>
+        <Button type="submit" variant="outline">
+          Sign out and switch accounts
+        </Button>
       </form>
     </>
   )
@@ -2737,6 +2808,7 @@ function AnonymousBranch({
 - [ ] **Step 2: Create the public landing page**
 
 `src/app/invite/[token]/page.tsx`:
+
 ```tsx
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
@@ -2758,15 +2830,16 @@ export default async function InviteLandingPage({
 
   const { data: invite } = await admin
     .from('invitations')
-    .select(
-      'id, email, role, expires_at, accepted_at, invited_by, workspaces!inner(slug, name)',
-    )
+    .select('id, email, role, expires_at, accepted_at, invited_by, workspaces!inner(slug, name)')
     .eq('token', dbToken)
     .maybeSingle()
 
   let state: InviteState
   if (!invite) {
-    state = { kind: 'invalid', message: 'This invitation does not exist or has already been accepted.' }
+    state = {
+      kind: 'invalid',
+      message: 'This invitation does not exist or has already been accepted.',
+    }
   } else if (invite.accepted_at) {
     state = { kind: 'invalid', message: 'This invitation has already been accepted.' }
   } else if (new Date(invite.expires_at).getTime() < Date.now()) {
@@ -2835,6 +2908,7 @@ git add -A && git commit -m "feat(invite): public /invite/[token] landing with 4
 ## Task 17: `/app/invitations` page + pending-invites banner
 
 **Files:**
+
 - Create: `src/app/app/invitations/page.tsx`
 - Create: `src/components/app/pending-invites-banner.tsx`
 - Modify: `src/app/app/layout.tsx` (mount the banner)
@@ -2842,6 +2916,7 @@ git add -A && git commit -m "feat(invite): public /invite/[token] landing with 4
 - [ ] **Step 1: Create the invitations page**
 
 `src/app/app/invitations/page.tsx`:
+
 ```tsx
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -2859,6 +2934,7 @@ export default async function InvitationsPage() {
 That's a stub — we need a per-row accept/decline. Let me write it more carefully. **Replace the above with:**
 
 `src/app/app/invitations/page.tsx`:
+
 ```tsx
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -2883,7 +2959,12 @@ export default async function InvitationsPage() {
 
   const invites = (rows ?? []).map((r) => {
     const w = Array.isArray(r.workspaces) ? r.workspaces[0] : r.workspaces
-    return { id: r.id, role: r.role as 'admin' | 'member', token: r.token, workspaceName: w?.name ?? '?' }
+    return {
+      id: r.id,
+      role: r.role as 'admin' | 'member',
+      token: r.token,
+      workspaceName: w?.name ?? '?',
+    }
   })
 
   if (invites.length === 0) {
@@ -2893,7 +2974,11 @@ export default async function InvitationsPage() {
           <CardTitle>Pending invitations</CardTitle>
         </CardHeader>
         <CardContent>
-          <EmptyState icon={Mail} title="You're all caught up." description="No pending invitations." />
+          <EmptyState
+            icon={Mail}
+            title="You're all caught up."
+            description="No pending invitations."
+          />
         </CardContent>
       </Card>
     )
@@ -2925,6 +3010,7 @@ export default async function InvitationsPage() {
 - [ ] **Step 2: Create `InvitationActionRow` (accept/decline buttons)**
 
 `src/components/app/invitation-action-row.tsx`:
+
 ```tsx
 'use client'
 
@@ -2969,6 +3055,7 @@ export function InvitationActionRow({ id, token }: { id: string; token: string }
 - [ ] **Step 3: Create `PendingInvitesBanner` (server component)**
 
 `src/components/app/pending-invites-banner.tsx`:
+
 ```tsx
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
@@ -3001,7 +3088,7 @@ Add inside the personal layout, between `<header>` and `<main>`:
 ```tsx
 import { PendingInvitesBanner } from '@/components/app/pending-invites-banner'
 // ...
-<PendingInvitesBanner />
+;<PendingInvitesBanner />
 ```
 
 (For the workspace layout, mount it similarly — the banner shows everywhere a logged-in user is in the app.)
@@ -3018,11 +3105,13 @@ git add -A && git commit -m "feat(invitations): add /app/invitations page + Invi
 ## Task 18: Playwright E2E — workspace switching
 
 **Files:**
+
 - Create: `tests/e2e/workspaces.spec.ts`
 
 - [ ] **Step 1: Write the test**
 
 `tests/e2e/workspaces.spec.ts`:
+
 ```ts
 import { test, expect } from '@playwright/test'
 import { createClient } from '@supabase/supabase-js'
@@ -3045,7 +3134,10 @@ test('create + switch between workspaces', async ({ page }) => {
 
   // Onboard with first workspace
   await page.fill('input[name="name"]', ws1)
-  await Promise.all([page.waitForURL(/\/app\/w\/[^/]+\/dashboard/), page.click('button[type="submit"]')])
+  await Promise.all([
+    page.waitForURL(/\/app\/w\/[^/]+\/dashboard/),
+    page.click('button[type="submit"]'),
+  ])
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
   await expect(page.getByText(ws1).first()).toBeVisible()
 
@@ -3055,7 +3147,10 @@ test('create + switch between workspaces', async ({ page }) => {
   await page.getByRole('button', { name: ws1 }).click()
   await page.getByRole('menuitem', { name: /new workspace/i }).click()
   await page.fill('input[name="name"]', ws2)
-  await Promise.all([page.waitForURL(/\/app\/w\/[^/]+\/dashboard/), page.click('button[type="submit"]:has-text("Create workspace")')])
+  await Promise.all([
+    page.waitForURL(/\/app\/w\/[^/]+\/dashboard/),
+    page.click('button[type="submit"]:has-text("Create workspace")'),
+  ])
   await expect(page.getByText(ws2).first()).toBeVisible()
   expect(page.url()).not.toBe(ws1Url)
 
@@ -3084,6 +3179,7 @@ test('create + switch between workspaces', async ({ page }) => {
 ```bash
 export PATH="/Users/marios/.nvm/versions/node/v20.20.2/bin:/Users/marios/bin:$PATH" && cd /Users/marios/Desktop/Cursor/autoads && set -a && source .env.local && set +a && pnpm exec playwright test tests/e2e/workspaces.spec.ts 2>&1 | tail -10
 ```
+
 Expected: 1 test passes.
 
 - [ ] **Step 3: Commit + push**
@@ -3097,11 +3193,13 @@ git add -A && git commit -m "test(e2e): workspace switching happy path" && git p
 ## Task 19: Playwright E2E — invite flow
 
 **Files:**
+
 - Create: `tests/e2e/invite.spec.ts`
 
 - [ ] **Step 1: Write the test**
 
 `tests/e2e/invite.spec.ts`:
+
 ```ts
 import { test, expect } from '@playwright/test'
 import { createClient } from '@supabase/supabase-js'
@@ -3109,7 +3207,9 @@ import { createClient } from '@supabase/supabase-js'
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-test('owner invites member; member signs up via invite and lands on workspace', async ({ browser }) => {
+test('owner invites member; member signs up via invite and lands on workspace', async ({
+  browser,
+}) => {
   const adminEmail = `admin-${Date.now()}@autoads-qa.dev`
   const memberEmail = `member-${Date.now()}@autoads-qa.dev`
   const password = 'Testing123'
@@ -3124,7 +3224,10 @@ test('owner invites member; member signs up via invite and lands on workspace', 
   await ownerPage.goto('/sign-up')
   await ownerPage.fill('input[name="email"]', adminEmail)
   await ownerPage.fill('input[name="password"]', password)
-  await Promise.all([ownerPage.waitForURL('**/onboarding'), ownerPage.click('button[type="submit"]')])
+  await Promise.all([
+    ownerPage.waitForURL('**/onboarding'),
+    ownerPage.click('button[type="submit"]'),
+  ])
   await ownerPage.fill('input[name="name"]', wsName)
   await Promise.all([
     ownerPage.waitForURL(/\/app\/w\/[^/]+\/dashboard/),
@@ -3185,6 +3288,7 @@ test('owner invites member; member signs up via invite and lands on workspace', 
 ```bash
 export PATH="/Users/marios/.nvm/versions/node/v20.20.2/bin:/Users/marios/bin:$PATH" && cd /Users/marios/Desktop/Cursor/autoads && set -a && source .env.local && set +a && pnpm exec playwright test tests/e2e/invite.spec.ts 2>&1 | tail -15
 ```
+
 If you hit Supabase email rate-limit (`over_email_send_rate_limit`), wait an hour and retry. The test sends 2 sign-up emails per run.
 
 - [ ] **Step 3: Commit + push**
@@ -3210,6 +3314,7 @@ export PATH="/Users/marios/.nvm/versions/node/v20.20.2/bin:/Users/marios/bin:$PA
 ```bash
 set -a && source .env.local && set +a && pnpm exec playwright test 2>&1 | tail -15
 ```
+
 Expected: 4/4 pass.
 
 - [ ] **Step 3: Verify deploy succeeded**
@@ -3250,23 +3355,25 @@ git commit --allow-empty -m "chore: sub-project 2 (Workspaces & RBAC) shipped" &
 
 **Spec coverage:**
 
-| Spec section | Tasks |
-|---|---|
-| Section 1 — Data model & RLS | Tasks 1, 2, 3 |
-| Section 2 — Routes (URL refactor, layouts, /app redirect, back-compat) | Tasks 8, 9, 10, 11 |
-| Section 3 — Auth/proxy/RBAC (membership helper, Server Actions, public invite landing) | Tasks 5, 6, 7, 8, 16 |
-| Section 4 — UI (switcher, members, invite section, pending list, danger zone, banner) | Tasks 12, 13, 14, 15, 17 |
-| Acceptance — workspaces switching | Task 18 |
-| Acceptance — invite + accept | Task 19 |
-| Acceptance — manual walkthrough | Task 20 |
+| Spec section                                                                           | Tasks                    |
+| -------------------------------------------------------------------------------------- | ------------------------ |
+| Section 1 — Data model & RLS                                                           | Tasks 1, 2, 3            |
+| Section 2 — Routes (URL refactor, layouts, /app redirect, back-compat)                 | Tasks 8, 9, 10, 11       |
+| Section 3 — Auth/proxy/RBAC (membership helper, Server Actions, public invite landing) | Tasks 5, 6, 7, 8, 16     |
+| Section 4 — UI (switcher, members, invite section, pending list, danger zone, banner)  | Tasks 12, 13, 14, 15, 17 |
+| Acceptance — workspaces switching                                                      | Task 18                  |
+| Acceptance — invite + accept                                                           | Task 19                  |
+| Acceptance — manual walkthrough                                                        | Task 20                  |
 
 **Gaps:**
+
 - "Leave workspace" UI is not built (action exists). Flagged in Task 20.
 - Pending invites banner mounted on personal layout (Task 17 step 4). Workspace layout banner mount is mentioned in passing but not in a Step. Implementer should add `<PendingInvitesBanner />` to `src/app/app/w/[slug]/layout.tsx` between the header and main as part of Task 17 Step 4 — covered by the prose but not a separate checkbox. Add if missed.
 
 **Placeholder scan:** No "TBD"/"TODO" in plan steps. Two intentional notes: "no leave-workspace UI" (flagged in Task 20) and "ws layout banner mount" (covered in prose but worth re-checking).
 
 **Type consistency:**
+
 - `WorkspaceRole = 'owner' | 'admin' | 'member'` used consistently
 - `Membership` interface (`role`, `workspaceId`, `workspaceName`) used by `requireMember` / `requireRole` and consumed by every layout/page
 - Cookie name `recent_workspace_slug` used consistently across proxy, actions, and `/app` page

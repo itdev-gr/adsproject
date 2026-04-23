@@ -85,6 +85,7 @@ create index invitations_token_idx on public.invitations(token);
 ### RLS rewrite
 
 **`workspaces`** (replaces Foundation policies):
+
 - `select`: any member of the workspace
 - `insert`: any authenticated user (`owner_id = auth.uid()` enforced)
 - `update`: owner or admin in this workspace
@@ -236,10 +237,10 @@ WORKSPACE CONTEXT  (full sidebar, header shows workspace switcher with current =
 
 ### Two distinct app layouts
 
-| Layout | Wraps | Chrome |
-|---|---|---|
-| `src/app/app/layout.tsx` | `/app/page`, `/app/settings/*`, `/app/invitations` | Top header only — workspace switcher (label: "Personal") + user menu. **No sidebar.** Pre-fetches the user's workspace memberships server-side. |
-| `src/app/app/w/[slug]/layout.tsx` | All `/app/w/<slug>/*` | Top header (workspace switcher with active = `<slug>`, user menu) + classic left sidebar. Calls `requireMember(slug)` first; redirects on miss. |
+| Layout                            | Wraps                                              | Chrome                                                                                                                                          |
+| --------------------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/app/app/layout.tsx`          | `/app/page`, `/app/settings/*`, `/app/invitations` | Top header only — workspace switcher (label: "Personal") + user menu. **No sidebar.** Pre-fetches the user's workspace memberships server-side. |
+| `src/app/app/w/[slug]/layout.tsx` | All `/app/w/<slug>/*`                              | Top header (workspace switcher with active = `<slug>`, user menu) + classic left sidebar. Calls `requireMember(slug)` first; redirects on miss. |
 
 ### Workspace switcher dropdown (in header, both layouts)
 
@@ -263,16 +264,16 @@ Switching: client navigation to `/app/w/<target>/dashboard`. Proxy writes the co
 
 ### Foundation routes that disappear
 
-| Old | New |
-|---|---|
-| `/app/dashboard` | `/app/w/<slug>/dashboard` |
-| `/app/campaigns` | `/app/w/<slug>/campaigns` |
-| `/app/connections` | `/app/w/<slug>/connections` |
-| `/app/automation` | `/app/w/<slug>/automation` |
-| `/app/reports` | `/app/w/<slug>/reports` |
+| Old                       | New                              |
+| ------------------------- | -------------------------------- |
+| `/app/dashboard`          | `/app/w/<slug>/dashboard`        |
+| `/app/campaigns`          | `/app/w/<slug>/campaigns`        |
+| `/app/connections`        | `/app/w/<slug>/connections`      |
+| `/app/automation`         | `/app/w/<slug>/automation`       |
+| `/app/reports`            | `/app/w/<slug>/reports`          |
 | `/app/settings/workspace` | `/app/w/<slug>/settings/general` |
-| `/app/settings/profile` | (unchanged) |
-| `/app/settings/account` | (unchanged) |
+| `/app/settings/profile`   | (unchanged)                      |
+| `/app/settings/account`   | (unchanged)                      |
 
 ### Back-compat redirects in proxy
 
@@ -284,10 +285,10 @@ Switching: client navigation to `/app/w/<target>/dashboard`. Proxy writes the co
 
 ### Three layers of defence
 
-| Layer | What it stops | When |
-|---|---|---|
-| **RLS** (Postgres) | Reading or writing data you shouldn't — final authority | Every query |
-| **Proxy** (`src/proxy.ts`) | Fast UX redirects (anon → /log-in, non-member → /app, stale paths) | Every protected request |
+| Layer                       | What it stops                                                      | When                                        |
+| --------------------------- | ------------------------------------------------------------------ | ------------------------------------------- |
+| **RLS** (Postgres)          | Reading or writing data you shouldn't — final authority            | Every query                                 |
+| **Proxy** (`src/proxy.ts`)  | Fast UX redirects (anon → /log-in, non-member → /app, stale paths) | Every protected request                     |
 | **Layout / Server Actions** | Showing the wrong UI; permitting an action you don't have role for | Server-side render + before any DB mutation |
 
 ### Proxy changes
@@ -317,7 +318,10 @@ export async function requireMember(slug: string): Promise<{
 }>
 
 // Throws redirect to /app/w/<slug>/dashboard if user's role isn't allowed.
-export async function requireRole(slug: string, allowed: Role[]): Promise<{
+export async function requireRole(
+  slug: string,
+  allowed: Role[],
+): Promise<{
   role: Role
   workspaceId: string
   workspaceName: string
@@ -325,6 +329,7 @@ export async function requireRole(slug: string, allowed: Role[]): Promise<{
 ```
 
 Used by:
+
 - `app/w/[slug]/layout.tsx`: `requireMember(slug)`
 - `/settings/general` page: `requireRole(slug, ['owner','admin'])`
 - `/settings/members` page: `requireMember(slug)` (everyone sees the list; UI gates actions by role)
@@ -451,23 +456,24 @@ List of pending invitations. Each row: workspace name, role badge, "invited by",
 ### Pending-invites banner
 
 Server component shown on personal-context pages (`/app`, `/app/settings/*`) when count > 0:
+
 > Yellow banner: "You have N pending invitations. View →" (links to `/app/invitations`)
 
 ### New components inventory
 
-| Component | Type | File |
-|---|---|---|
-| `WorkspaceSwitcher` | Client | `src/components/app/workspace-switcher.tsx` |
-| `CreateWorkspaceDialog` | Client | `src/components/app/create-workspace-dialog.tsx` |
-| `WorkspaceMembersTable` | Server | `src/components/app/workspace-members-table.tsx` |
-| `RoleSelect` | Client | `src/components/app/role-select.tsx` |
-| `RemoveMemberButton` | Client | `src/components/app/remove-member-button.tsx` |
-| `InviteSection` | Client | `src/components/app/invite-section.tsx` |
+| Component                | Type                               | File                                              |
+| ------------------------ | ---------------------------------- | ------------------------------------------------- |
+| `WorkspaceSwitcher`      | Client                             | `src/components/app/workspace-switcher.tsx`       |
+| `CreateWorkspaceDialog`  | Client                             | `src/components/app/create-workspace-dialog.tsx`  |
+| `WorkspaceMembersTable`  | Server                             | `src/components/app/workspace-members-table.tsx`  |
+| `RoleSelect`             | Client                             | `src/components/app/role-select.tsx`              |
+| `RemoveMemberButton`     | Client                             | `src/components/app/remove-member-button.tsx`     |
+| `InviteSection`          | Client                             | `src/components/app/invite-section.tsx`           |
 | `PendingInvitationsList` | Server-data + client-actions split | `src/components/app/pending-invitations-list.tsx` |
-| `InviteAcceptCard` | Server | `src/components/app/invite-accept-card.tsx` |
-| `TransferOwnershipForm` | Client | `src/components/app/transfer-ownership-form.tsx` |
-| `DeleteWorkspaceForm` | Client | `src/components/app/delete-workspace-form.tsx` |
-| `PendingInvitesBanner` | Server | `src/components/app/pending-invites-banner.tsx` |
+| `InviteAcceptCard`       | Server                             | `src/components/app/invite-accept-card.tsx`       |
+| `TransferOwnershipForm`  | Client                             | `src/components/app/transfer-ownership-form.tsx`  |
+| `DeleteWorkspaceForm`    | Client                             | `src/components/app/delete-workspace-form.tsx`    |
+| `PendingInvitesBanner`   | Server                             | `src/components/app/pending-invites-banner.tsx`   |
 
 shadcn primitives to add: `select`, `table`.
 
