@@ -1,11 +1,20 @@
 import * as React from 'react'
-import { Input as InputPrimitive } from '@base-ui/react/input'
 
 import { cn } from '@/lib/utils'
 
+/**
+ * Plain HTML <input> styled with shadcn's classes.
+ *
+ * NOTE: replaces the base-ui `<Input as="input">` wrapper because base-ui's
+ * Input component does not reliably propagate the `name` + `value` of an
+ * uncontrolled input into the parent <form>'s FormData on submit (verified
+ * with Next 16 Server Actions: form.action(formData) received empty entries).
+ * Using a plain <input> with the same Tailwind classes restores standard
+ * browser FormData behaviour.
+ */
 function Input({ className, type, ...props }: React.ComponentProps<'input'>) {
   return (
-    <InputPrimitive
+    <input
       type={type}
       data-slot="input"
       className={cn(
