@@ -24,10 +24,14 @@ export async function proxy(request: NextRequest) {
 
   if (user) {
     // Get all workspaces this user belongs to.
-    const { data: memberships } = await supabase
+    const { data: memberships, error: membershipsError } = await supabase
       .from('workspace_members')
       .select('role, workspaces!inner(slug)')
       .eq('user_id', user.id)
+    if (membershipsError) {
+      // Surface RLS / DB errors during dev — these are bugs, not silent failures.
+      console.error('[proxy] memberships query error:', membershipsError.message)
+    }
     const slugs: string[] = (memberships ?? [])
       .map((m) => {
         const w = Array.isArray(m.workspaces) ? m.workspaces[0] : m.workspaces

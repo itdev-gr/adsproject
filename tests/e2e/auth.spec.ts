@@ -18,9 +18,12 @@ test('full happy path: sign up → onboard → dashboard → sign out', async ({
   await page.fill('input[name="password"]', password)
   await Promise.all([page.waitForURL('**/onboarding'), page.click('button[type="submit"]')])
 
-  // Onboard
+  // Onboard — proxy back-compat redirects /app/dashboard → /app/w/<slug>/dashboard
   await page.fill('input[name="name"]', workspaceName)
-  await Promise.all([page.waitForURL('**/app/dashboard'), page.click('button[type="submit"]')])
+  await Promise.all([
+    page.waitForURL(/\/app\/w\/[^/]+\/dashboard$/),
+    page.click('button[type="submit"]'),
+  ])
 
   // Dashboard
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
